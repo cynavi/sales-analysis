@@ -54,7 +54,7 @@ export class DataGridComponent implements OnInit {
 
   dgStore = inject(DataGridStore);
   dialogRef!: DynamicDialogRef<TableSettingComponent>;
-  unsubscribe$ = new Subject<void>();
+  // unsubscribe$ = new Subject<void>();
   // data$ = toObservable(computed(() => ({
   //   filter: {
   //     columnFilters: this.dgStore.filter.columnFilters(),
@@ -71,6 +71,7 @@ export class DataGridComponent implements OnInit {
   private readonly messageService = inject(MessageService);
 
   constructor() {
+    // TODO find a better way
     effect(() => {
       const criteria: DataGridCriteria = {
         filter: {
@@ -86,8 +87,8 @@ export class DataGridComponent implements OnInit {
     }, {allowSignalWrites: true});
 
     inject(DestroyRef).onDestroy(() => {
-      this.unsubscribe$.next();
-      this.unsubscribe$.complete();
+      // this.unsubscribe$.next();
+      // this.unsubscribe$.complete();
       if (this.dialogRef) {
         this.dialogRef.close();
       }
@@ -160,5 +161,9 @@ export class DataGridComponent implements OnInit {
       sorts.push({ column: sortMeta.field, order: sortMeta.order == 1 ? 'desc' : 'asc' });
     });
     this.dgStore.setSorts(sorts);
+  }
+
+  generateCsv() {
+
   }
 }

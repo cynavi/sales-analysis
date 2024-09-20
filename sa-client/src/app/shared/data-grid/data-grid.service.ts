@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Column, DataGridCriteria } from './data-grid';
 import { Observable, of } from 'rxjs';
 import { ApiResponse } from '../model/api-response';
+import { environment } from '../../../environment';
 
 @Injectable()
 export class DataGridService {
@@ -22,5 +23,9 @@ export class DataGridService {
   getRecordCount(): Observable<ApiResponse<{ recordCount: number }>> {
     // return this.#httpClient.get<ApiResponse<{ recordCount: number }>>('http://localhost:8081/sales/count');
     return of({ data: { recordCount: 543323 } });
+  }
+
+  generateCsv(criteria: DataGridCriteria) {
+    return this.#httpClient.post(`${environment.producerUrl}/generate`, criteria)
   }
 }

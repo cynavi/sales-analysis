@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit } from '@angular/core';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import * as d3Projection from 'd3-geo-projection';
@@ -11,8 +11,6 @@ import { CardModule } from 'primeng/card';
 import { AccordionModule } from 'primeng/accordion';
 import { CalendarModule } from 'primeng/calendar';
 import { FormsModule } from '@angular/forms';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { skip, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-choropleth-map',
@@ -64,11 +62,11 @@ export class ChoroplethMapComponent implements OnInit {
     .center([0, 0])
     .translate([this.width / 2.2, this.height / 2]);
   path: d3.GeoPath<unknown, d3.GeoPermissibleObjects> = d3.geoPath().projection(this.projection);
-  data$ = toObservable(computed(() => this.choroplethMapStore.filter())).pipe(
-    skip(1),
-    switchMap(async () => this.choroplethMapStore.getData())
-  );
-  unsubscribe$ = new Subject<void>();
+  // data$ = toObservable(computed(() => this.choroplethMapStore.filter())).pipe(
+  //   skip(1),
+  //   switchMap(async () => this.choroplethMapStore.getData())
+  // );
+  // unsubscribe$ = new Subject<void>();
 
   constructor() {
     effect(() => {
@@ -76,14 +74,18 @@ export class ChoroplethMapComponent implements OnInit {
         this.prepareChart();
       }
     });
-    inject(DestroyRef).onDestroy(() => {
-      this.unsubscribe$.next();
-      this.unsubscribe$.complete();
-    });
+    // TODO find a better way
+    effect(() => {
+      this.choroplethMapStore.getData(this.choroplethMapStore.filter());
+    }, { allowSignalWrites: true });
+    // inject(DestroyRef).onDestroy(() => {
+    //   this.unsubscribe$.next();
+    //   this.unsubscribe$.complete();
+    // });
   }
 
   ngOnInit() {
-    this.data$.pipe(takeUntil(this.unsubscribe$)).subscribe();
+    // this.data$.pipe(takeUntil(this.unsubscribe$)).subscribe();
     this.svg = d3.select("#choropleth-map")
       .append("svg")
       .attr("width", "100%")
@@ -95,7 +97,6 @@ export class ChoroplethMapComponent implements OnInit {
   }
 
   prepareChart(): void {
-    console.log('preparing chart');
     const max = this.choroplethMapStore.data().reduce((prev, current) => prev['totalSales'] > current['totalSales'] ? prev : current);
     const min = this.choroplethMapStore.data().reduce((prev, current) => prev['totalSales'] > current['totalSales'] ? current : prev);
     this.color = (d3.scaleThreshold()

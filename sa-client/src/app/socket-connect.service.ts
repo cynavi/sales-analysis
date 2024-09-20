@@ -9,7 +9,7 @@ import SockJS from 'sockjs-client/dist/sockjs';
 export class SocketConnectService {
 
   constructor() {
-    // this.connect();
+    this.connect();
   }
 
   connect(): void {

@@ -42,7 +42,7 @@ export const ChoroplethMapStore = signalStore(
   })),
   withMethods(store => ({
     _setData(data: Map<string, number>[]) {
-      patchState(store, () => ({ data, loaded: true, error: null }));
+      patchState(store, () => ({ data: [...data], loaded: true, error: null }));
     },
 
     _setError(error: Error) {
@@ -59,19 +59,16 @@ export const ChoroplethMapStore = signalStore(
         tap(() => store._setLoading()),
         zipWith(
           choroplethMapService.fetchWorldPolygon(),
-          choroplethMapService.fetchWorldLines(),
-          choroplethMapService.fetchSalesData(store.filter())
+          choroplethMapService.fetchWorldLines()
         ),
         tap({
           next(response) {
-            patchState(store, state => ({
-              ...state,
+            patchState(store, () => ({
               worldPolygons: response[1],
               worldLines: response[2],
-              data: response[3].data,
-              loaded: true,
+              loaded: false,
               error: null
-            }))
+            }));
           },
           error(error: Error) {
             store._setError(error);
@@ -80,10 +77,10 @@ export const ChoroplethMapStore = signalStore(
       )
     ),
 
-    getData: rxMethod<void>(
+    getData: rxMethod<{ from: Date; to: Date }>(
       pipe(
         tap(() => store._setLoading()),
-        switchMap(() => choroplethMapService.fetchSalesData(store.filter())),
+        switchMap((filter) => choroplethMapService.fetchSalesData(filter)),
         tap({
           next(response: ApiResponse<Map<string, number>[]>) {
             store._setData(response.data);
