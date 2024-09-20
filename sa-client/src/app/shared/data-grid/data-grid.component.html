@@ -1,0 +1,71 @@
+<div class="h-full mt-4">
+  <p-table
+    (onFilter)="onFilterChange($event)"
+    (onPage)="onPaginate($event)"
+    (onSort)="onSortChange($event)"
+    [columns]="dgStore.filter.columns()"
+    [lazy]="true"
+    [paginator]="true"
+    [rowsPerPageOptions]="[50, 100, 200, 500, 1000]"
+    [rows]="dgStore.paginate.pageSize()"
+    [scrollable]="true"
+    [sortMode]="'multiple'"
+    [totalRecords]="dgStore.recordCount()"
+    [value]="dgStore.data()"
+    scrollHeight="50vh"
+  >
+    <ng-template pTemplate="caption">
+      <div class="justify-between items-center">
+        <div class="text-xl m-0 flex-row">Sales</div>
+        <span class="p-input-icon-left">
+            <p-button
+              (onClick)="openTableSettings()"
+              [rounded]="true"
+              [text]="true"
+              class="mr-2"
+              icon="pi pi-cog"
+              pTooltip="Settings"
+              severity="help"
+              tooltipPosition="bottom"
+            />
+            <p-button
+              [rounded]="true"
+              [text]="true"
+              icon="pi pi-download"
+              pTooltip="CSV Export"
+              severity="help"
+              tooltipPosition="bottom"
+            />
+          </span>
+      </div>
+    </ng-template>
+
+    <ng-template [inferHeader]="dgStore.filter.columns()" let-columns pTemplate="header">
+      <tr class="sticky">
+        @for (col of columns; track col.name; let index = $index) {
+          <th [pSortableColumn]="col.name">
+            <div class="flex flex-row">
+              <span>{{ col.label }}</span>
+              <p-sortIcon [field]="col.name"/>
+              <app-column-filter [column]="col"></app-column-filter>
+            </div>
+          </th>
+        }
+      </tr>
+    </ng-template>
+
+    <ng-template let-columns="columns" let-sale pTemplate="body">
+      <tr class="m-0 p-0">
+        @for (col of columns; track col.name) {
+          <td>
+            @if (col.type == 'date') {
+              {{ sale[col.name] | date }}
+            } @else {
+              {{ sale[col.name] }}
+            }
+          </td>
+        }
+      </tr>
+    </ng-template>
+  </p-table>
+</div>

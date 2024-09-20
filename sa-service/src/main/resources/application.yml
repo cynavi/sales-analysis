@@ -1,0 +1,32 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: sa-service
+  kafka:
+    topic: sa-csv
+    consumer:
+      bootstrap-servers: localhost:9092
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        retires: 10
+      group-id: sa-csv-group
+  batch:
+    jdbc:
+      initialize-schema: always
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sales
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  main:
+    web-application-type: reactive
+csv:
+  extracts:
+    path: E:\Prodspace\sales-analysis\
