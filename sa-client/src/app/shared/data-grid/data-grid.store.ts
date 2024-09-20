@@ -127,25 +127,25 @@ export const DataGridStore = signalStore(
         }),
         switchMap(() => dataGridService.getRecordCount()),
         tap({
-          next(response) {
+          next(response: ApiResponse<{ recordCount: number }>) {
             store._setRecordCount(response.data.recordCount);
           },
           error(error: Error) {
             store._setError(error);
           }
         }),
-        switchMap(() => dataGridService.getData({
-          filter: { ...store.filter(), columns: mapColumnsToColumnNames(store.columns()) },
-          paginate: store.paginate()
-        })),
-        tap({
-          next(response: ApiResponse<Record<string, number | string | Date>[]>) {
-            store._setData(response.data);
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
-        })
+        // switchMap(() => dataGridService.getData({
+        //   filter: { ...store.filter(), columns: mapColumnsToColumnNames(store.columns()) },
+        //   paginate: store.paginate()
+        // })),
+        // tap({
+        //   next(response: ApiResponse<Record<string, number | string | Date>[]>) {
+        //     store._setData(response.data);
+        //   },
+        //   error(error: Error) {
+        //     store._setError(error);
+        //   }
+        // })
       )
     )
   })),

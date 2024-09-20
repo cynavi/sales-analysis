@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, OnInit } from '@angular/core';
 import { TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -7,7 +7,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
-import { Column, ColumnFilter, Sort } from './data-grid';
+import { Column, ColumnFilter, DataGridCriteria, Sort } from './data-grid';
 import { ColumnFilterComponent } from './column-filter.component';
 import { InferBodyDirective } from './infer-body.directive';
 import { InferHeaderDirective } from './infer-header.directive';
@@ -19,7 +19,7 @@ import { FilterMetadata, MessageService, SortMeta } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
 import { DataGridStore } from './data-grid.store';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { filter, skip, switchMap } from 'rxjs';
+import { filter, skip, Subject, switchMap, takeUntil } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import { mapColumnsToColumnNames } from './data-grid.util';
 
@@ -52,25 +52,42 @@ import { mapColumnsToColumnNames } from './data-grid.util';
 })
 export class DataGridComponent implements OnInit {
 
-  dialogRef!: DynamicDialogRef<TableSettingComponent>;
   dgStore = inject(DataGridStore);
-  data$ = toObservable(computed(() => ({
-    filter: {
-      columnFilters: this.dgStore.filter.columnFilters(),
-      sorts: this.dgStore.filter.sorts(),
-      columns: mapColumnsToColumnNames(this.dgStore.filter.columns())
-    },
-    paginate: this.dgStore.paginate()
-  }))).pipe(
-    filter(criteria => !!criteria.filter.columns.length),
-    skip(1),
-    switchMap(async (criteria) => this.dgStore.getDataGridData(criteria))
-  );
+  dialogRef!: DynamicDialogRef<TableSettingComponent>;
+  unsubscribe$ = new Subject<void>();
+  // data$ = toObservable(computed(() => ({
+  //   filter: {
+  //     columnFilters: this.dgStore.filter.columnFilters(),
+  //     sorts: this.dgStore.filter.sorts(),
+  //     columns: mapColumnsToColumnNames(this.dgStore.filter.columns())
+  //   },
+  //   paginate: this.dgStore.paginate()
+  // }))).pipe(
+  //   filter(criteria => !!criteria.filter.columns.length),
+  //   skip(1),
+  //   switchMap(async (criteria) => this.dgStore.getDataGridData(criteria))
+  // );
   private readonly dialogService = inject(DialogService);
   private readonly messageService = inject(MessageService);
 
   constructor() {
+    effect(() => {
+      const criteria: DataGridCriteria = {
+        filter: {
+          columnFilters: this.dgStore.filter.columnFilters(),
+          sorts: this.dgStore.filter.sorts(),
+          columns: mapColumnsToColumnNames(this.dgStore.filter.columns()),
+        },
+        paginate: this.dgStore.paginate()
+      };
+      if (criteria.filter.columns.length) {
+        this.dgStore.getDataGridData(criteria);
+      }
+    }, {allowSignalWrites: true});
+
     inject(DestroyRef).onDestroy(() => {
+      this.unsubscribe$.next();
+      this.unsubscribe$.complete();
       if (this.dialogRef) {
         this.dialogRef.close();
       }
@@ -78,7 +95,7 @@ export class DataGridComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.data$.subscribe();
+    // this.data$.pipe(takeUntil(this.unsubscribe$)).subscribe();
   }
 
   onPaginate(event: TablePageEvent) {
@@ -88,7 +105,7 @@ export class DataGridComponent implements OnInit {
     });
   }
 
-  onFilterChange(event: TableFilterEvent) {
+  onFilterChange(event: TableFilterEvent): void {
     const columnFilters: ColumnFilter[] = [];
     for (let key in event.filters) {
       const filters = event.filters[key] as unknown as FilterMetadata[];
@@ -137,9 +154,9 @@ export class DataGridComponent implements OnInit {
     });
   }
 
-  onSortChange($event: { multiSortMeta: SortMeta[] }): void {
+  onSortChange($event: { multisortmeta: SortMeta[] }): void {
     const sorts: Sort[] = [];
-    $event.multiSortMeta.forEach(sortMeta => {
+    $event.multisortmeta.forEach(sortMeta => {
       sorts.push({ column: sortMeta.field, order: sortMeta.order == 1 ? 'desc' : 'asc' });
     });
     this.dgStore.setSorts(sorts);

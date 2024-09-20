@@ -12,11 +12,11 @@
     [sortMode]="'multiple'"
     [totalRecords]="dgStore.recordCount()"
     [value]="dgStore.data()"
-    scrollHeight="50vh"
+    scrollHeight="80vh"
   >
     <ng-template pTemplate="caption">
       <div class="justify-between items-center">
-        <div class="text-xl m-0 flex-row">Sales</div>
+        <div class="text-xl m-0 flex-row" style="color: rgba(255, 255, 255, 0.87)">Data Table</div>
         <span class="p-input-icon-left">
             <p-button
               (onClick)="openTableSettings()"

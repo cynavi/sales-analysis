@@ -3,9 +3,10 @@ import { patchState, signalStore, withHooks, withMethods, withState } from '@ngr
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import { subYears } from 'date-fns';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, tap, zipWith } from 'rxjs';
+import { pipe, switchMap, tap, zipWith } from 'rxjs';
 import { inject } from '@angular/core';
 import { ChoroplethMapService } from './choropleth-map.service';
+import { ApiResponse } from '../../model/api-response';
 
 type ChoroplethMapState = {
   data: Map<string, number>[];
@@ -59,7 +60,7 @@ export const ChoroplethMapStore = signalStore(
         zipWith(
           choroplethMapService.fetchWorldPolygon(),
           choroplethMapService.fetchWorldLines(),
-          choroplethMapService.fetchSalesData()
+          choroplethMapService.fetchSalesData(store.filter())
         ),
         tap({
           next(response) {
@@ -77,7 +78,22 @@ export const ChoroplethMapStore = signalStore(
           }
         })
       )
-    )
+    ),
+
+    getData: rxMethod<void>(
+      pipe(
+        tap(() => store._setLoading()),
+        switchMap(() => choroplethMapService.fetchSalesData(store.filter())),
+        tap({
+          next(response: ApiResponse<Map<string, number>[]>) {
+            store._setData(response.data);
+          },
+
+          error(error: Error) {
+            store._setError(error);
+          }
+        })
+      ))
   })),
   withHooks({
     onInit(store) {

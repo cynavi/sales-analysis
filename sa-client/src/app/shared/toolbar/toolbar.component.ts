@@ -3,7 +3,7 @@ import { TabMenuModule } from 'primeng/tabmenu';
 import { MenuItem } from 'primeng/api';
 import { Router } from '@angular/router';
 import { ToolbarModule } from 'primeng/toolbar';
-import { Button } from 'primeng/button';
+import { Button, ButtonDirective } from 'primeng/button';
 
 @Component({
   selector: 'app-toolbar',
@@ -11,7 +11,8 @@ import { Button } from 'primeng/button';
   imports: [
     TabMenuModule,
     ToolbarModule,
-    Button
+    Button,
+    ButtonDirective
   ],
   templateUrl: './toolbar.component.html',
   styleUrl: './toolbar.component.scss'

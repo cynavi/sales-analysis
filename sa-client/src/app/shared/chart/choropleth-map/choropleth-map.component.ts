@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, OnInit } from '@angular/core';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import * as d3Projection from 'd3-geo-projection';
@@ -9,15 +9,30 @@ import { ChoroplethMapStore } from './choropleth-map.store';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CardModule } from 'primeng/card';
 import { AccordionModule } from 'primeng/accordion';
+import { CalendarModule } from 'primeng/calendar';
+import { FormsModule } from '@angular/forms';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { skip, Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-choropleth-map',
   standalone: true,
-  imports: [CurrencyPipe, ProgressSpinnerModule, CardModule, AccordionModule],
+  imports: [CurrencyPipe, ProgressSpinnerModule, CardModule, AccordionModule, CalendarModule, FormsModule],
   providers: [ChoroplethMapService, ChoroplethMapStore],
   template: `
     <p-accordion [activeIndex]="0" [styleClass]="'w-full mt-4'">
-      <p-accordionTab header="Choropleth Visualiztion">
+      <p-accordionTab class="text-xl" header="Choropleth Visualiztion">
+        <div>
+          <p-calendar
+            [(ngModel)]="dateRange"
+            selectionMode="range"
+            [readonlyInput]="true"
+            [iconDisplay]="'input'"
+            placeholder="Date Range"
+            [showIcon]="true"
+            (onSelect)="onFilter()"
+          />
+        </div>
         <div class="w-full" id="choropleth-map"></div>
         @if (!choroplethMapStore.loaded()) {
           <p-progressSpinner
@@ -31,11 +46,12 @@ import { AccordionModule } from 'primeng/accordion';
   styleUrl: './choropleth-map.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChoroplethMapComponent {
+export class ChoroplethMapComponent implements OnInit {
 
   currencyPipe = inject(CurrencyPipe);
   choroplethMapStore = inject(ChoroplethMapStore);
 
+  dateRange: Date[] = [];
   svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown>;
   polygon: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
   lines: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
@@ -47,18 +63,27 @@ export class ChoroplethMapComponent {
     .scale(85)
     .center([0, 0])
     .translate([this.width / 2.2, this.height / 2]);
-
   path: d3.GeoPath<unknown, d3.GeoPermissibleObjects> = d3.geoPath().projection(this.projection);
+  data$ = toObservable(computed(() => this.choroplethMapStore.filter())).pipe(
+    skip(1),
+    switchMap(async () => this.choroplethMapStore.getData())
+  );
+  unsubscribe$ = new Subject<void>();
 
   constructor() {
     effect(() => {
-      if (this.choroplethMapStore.loaded()) {
+      if (this.choroplethMapStore.loaded() && !this.choroplethMapStore.error()) {
         this.prepareChart();
       }
     });
+    inject(DestroyRef).onDestroy(() => {
+      this.unsubscribe$.next();
+      this.unsubscribe$.complete();
+    });
   }
 
-  prepareChart(): void {
+  ngOnInit() {
+    this.data$.pipe(takeUntil(this.unsubscribe$)).subscribe();
     this.svg = d3.select("#choropleth-map")
       .append("svg")
       .attr("width", "100%")
@@ -67,6 +92,10 @@ export class ChoroplethMapComponent {
       .attr("class", "flex xy-center");
     this.polygon = this.svg.append("g");
     this.lines = this.svg.append("g");
+  }
+
+  prepareChart(): void {
+    console.log('preparing chart');
     const max = this.choroplethMapStore.data().reduce((prev, current) => prev['totalSales'] > current['totalSales'] ? prev : current);
     const min = this.choroplethMapStore.data().reduce((prev, current) => prev['totalSales'] > current['totalSales'] ? current : prev);
     this.color = (d3.scaleThreshold()
@@ -141,5 +170,12 @@ export class ChoroplethMapComponent {
           .attr('transform', event.transform);
       });
     this.svg.call(zoomFunction);
+  }
+
+  onFilter(): void {
+    const from = this.dateRange[0], to = this.dateRange[1];
+    if (from && to) {
+      this.choroplethMapStore.setFilter({ from, to });
+    }
   }
 }
