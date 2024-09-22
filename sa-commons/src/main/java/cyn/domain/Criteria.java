@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record Criteria(
         @NotNull
-        Filter filter,
+        DataTableFilter dataTableFilter,
         @NotNull
         Paginate paginate
 ) {

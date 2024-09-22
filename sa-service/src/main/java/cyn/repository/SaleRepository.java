@@ -1,5 +1,6 @@
 package cyn.repository;
 
+import cyn.domain.SaleOverallFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -16,6 +17,13 @@ import java.util.Map;
 public class SaleRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(SaleRepository.class);
+
+    private static final String overallSalesQuery = """
+            select country_code as code, sum(unit_price) as totalSales
+            from sale
+            where invoice_date >= :from and invoice_date <= :to
+            group by country_code
+            """;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -49,6 +57,13 @@ public class SaleRepository {
             });
             return sale;
         });
+    }
+
+    public List<Map<String, Object>> getSalesOverall(SaleOverallFilter saleOverallFilter) {
+        return jdbcTemplate.query(overallSalesQuery,
+                Map.of("from", saleOverallFilter.from(), "to", saleOverallFilter.to()),
+                (rs, i) -> Map.of("countryCode", rs.getString(1), "totalSales", rs.getDouble(2))
+        );
     }
 
     public Integer getRecordCount() {

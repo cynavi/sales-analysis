@@ -1,7 +1,7 @@
 package cyn.config;
 
 import cyn.entity.Sale;
-import cyn.repository.SaleRepository;
+import cyn.service.BatchService;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
@@ -23,14 +23,14 @@ public class ExcelToDatabaseJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
 
-    private final SaleRepository saleRepository;
+    private final BatchService batchService;
 
     public ExcelToDatabaseJobConfig(JobRepository jobRepository,
                                     PlatformTransactionManager transactionManager,
-                                    SaleRepository saleRepository) {
+                                    BatchService batchService) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
-        this.saleRepository = saleRepository;
+        this.batchService = batchService;
     }
 
     @Bean
@@ -56,12 +56,12 @@ public class ExcelToDatabaseJobConfig {
 
     @Bean
     public ItemProcessor<Sale, Sale> processor() {
-        return new SaleProcessor();
+        return new SaleProcessor(batchService);
     }
 
     @Bean
     public ItemWriter<Sale> writer() {
-        return new DatabaseSaleWriter(saleRepository);
+        return new DatabaseSaleWriter(batchService);
     }
 
     @Bean

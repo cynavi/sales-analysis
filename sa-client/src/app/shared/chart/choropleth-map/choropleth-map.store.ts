@@ -25,8 +25,8 @@ const initialState: ChoroplethMapState = {
   worldLines: null,
   worldPolygons: null,
   filter: {
-    from: subYears(new Date(), 1),
-    to: new Date()
+    from: new Date(2010, 12, 1),
+    to: new Date(2011, 12, 9)
   },
   loaded: true,
   error: null
@@ -42,7 +42,7 @@ export const ChoroplethMapStore = signalStore(
   })),
   withMethods(store => ({
     _setData(data: Map<string, number>[]) {
-      patchState(store, () => ({ data: [...data], loaded: true, error: null }));
+      patchState(store, () => ({ data, loaded: true, error: null }));
     },
 
     _setError(error: Error) {
@@ -59,14 +59,17 @@ export const ChoroplethMapStore = signalStore(
         tap(() => store._setLoading()),
         zipWith(
           choroplethMapService.fetchWorldPolygon(),
-          choroplethMapService.fetchWorldLines()
+          choroplethMapService.fetchWorldLines(),
+          choroplethMapService.fetchSalesData(store.filter())
         ),
         tap({
           next(response) {
-            patchState(store, () => ({
+            patchState(store, state => ({
+              ...state,
               worldPolygons: response[1],
               worldLines: response[2],
-              loaded: false,
+              data: response[3].data,
+              loaded: true,
               error: null
             }));
           },

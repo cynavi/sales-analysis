@@ -6,6 +6,33 @@ html, body {
   min-height: 100vh;
 }
 
+body {
+  --sb-track-color: #232E33;
+  --sb-thumb-color: #585a59;
+  --sb-size: 10px;
+}
+
+::-webkit-scrollbar {
+  width: var(--sb-size)
+}
+
+::-webkit-scrollbar-track {
+  background: var(--sb-track-color);
+  border-radius: 1px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+  border-radius: 1px;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  body {
+    scrollbar-color: var(--sb-thumb-color)
+    var(--sb-track-color);
+  }
+}
+
 .xy-center {
   display: flex;
   align-items: center;

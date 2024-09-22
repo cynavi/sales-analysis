@@ -2,7 +2,8 @@ package cyn.controller;
 
 import cyn.domain.Criteria;
 import cyn.domain.Response;
-import cyn.service.SalesService;
+import cyn.domain.SaleOverallFilter;
+import cyn.service.SaleService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +21,15 @@ import java.util.Map;
 @CrossOrigin("*")
 public class SalesController {
 
-    private final SalesService salesService;
+    private final SaleService saleService;
 
-    public SalesController(SalesService salesService) {
-        this.salesService = salesService;
+    public SalesController(SaleService saleService) {
+        this.saleService = saleService;
     }
 
     @PostMapping("/sales")
     public ResponseEntity<Mono<Response>> getSalesDate(@Valid @RequestBody Criteria criteria) {
-        var response = new Response(salesService.getSalesData(criteria), List.of());
+        var response = new Response(saleService.getSalesData(criteria), List.of());
         return ResponseEntity
                 .status(HttpStatus.OK.value())
                 .body(Mono.just(response));
@@ -38,6 +39,13 @@ public class SalesController {
     public ResponseEntity<Mono<Response>> getRecordCount() {
         return ResponseEntity
                 .status(HttpStatus.OK.value())
-                .body(Mono.just(new Response(Map.of("recordCount", salesService.getRecordCount()), List.of())));
+                .body(Mono.just(new Response(Map.of("recordCount", saleService.getRecordCount()), List.of())));
+    }
+
+    @PostMapping("/sales/overall")
+    public ResponseEntity<Mono<Response>> getSalesOverall(@Valid @RequestBody SaleOverallFilter saleOverallFilter) {
+        return ResponseEntity
+                .status(HttpStatus.OK.value())
+                .body(Mono.just(new Response(saleService.getOverallSales(saleOverallFilter), List.of())));
     }
 }

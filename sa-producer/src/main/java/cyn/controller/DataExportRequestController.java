@@ -1,8 +1,8 @@
 package cyn.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import cyn.domain.Criteria;
 import cyn.domain.DataExportRequest;
+import cyn.domain.DataTableFilter;
 import cyn.producer.DataExportRequestProducer;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,8 +24,8 @@ public class DataExportRequestController {
     }
 
     @PostMapping("generate")
-    public ResponseEntity<Mono<?>> sendDataExportRequest(@RequestBody @Valid Criteria criteria) throws JsonProcessingException {
-        var dataExportRequest = new DataExportRequest(UUID.randomUUID().toString(), criteria.filter(), criteria.paginate());
+    public ResponseEntity<Mono<?>> sendDataExportRequest(@RequestBody @Valid DataTableFilter dataTableFilter) throws JsonProcessingException {
+        var dataExportRequest = new DataExportRequest(UUID.randomUUID().toString(), dataTableFilter);
         dataExportRequestProducer.sendDataExportRequestEvent(dataExportRequest);
         return ResponseEntity
                 .status(HttpStatus.CREATED)

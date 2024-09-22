@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record Filter(
+public record DataTableFilter(
         @NotEmpty
         List<@NotNull String> columns,
         List<Sort> sorts,
-        List<ColumnFilter> columnFilters
+        List<Filter> filters
 ) {
 }

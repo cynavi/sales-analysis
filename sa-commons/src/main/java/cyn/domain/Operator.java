@@ -2,7 +2,8 @@ package cyn.domain;
 
 public enum Operator {
 
-    LESS_THAN;
+    AND,
+    OR;
 
     Operator() {
 

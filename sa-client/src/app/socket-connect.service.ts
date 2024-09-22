@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as Stomp from 'stompjs';
 import { Client, Frame, Message } from 'stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
+import { environment } from '../environment';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,7 @@ export class SocketConnectService {
   }
 
   connect(): void {
-    let ws: WebSocket = new SockJS('http://localhost:8081/websocket');
+    let ws: WebSocket = new SockJS(`${environment.serviceUrl}/websocket`);
     const client: Client = Stomp.over(ws);
     const connectCallback = (_: Frame | undefined): void => {
       client.subscribe('/reports', (message: Message): void => {

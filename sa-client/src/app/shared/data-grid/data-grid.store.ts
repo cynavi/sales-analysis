@@ -1,4 +1,4 @@
-import { Column, ColumnFilter, DataGridCriteria, Filter, Paginate, Sort } from './data-grid';
+import { Column, ColumnFilter, DataGridCriteria, DataTableFilter, Paginate, Sort } from './data-grid';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { inject } from '@angular/core';
 import { DataGridService } from './data-grid.service';
@@ -11,7 +11,7 @@ import { mapColumnsToColumnNames } from './data-grid.util';
 type DataGridState = {
   data: Record<string, number | string | Date>[];
   recordCount: number;
-  filter: Filter;
+  dataTableFilter: DataTableFilter;
   columns: Column[];
   paginate: Paginate;
   loaded: boolean;
@@ -21,13 +21,13 @@ type DataGridState = {
 const initialState: DataGridState = {
   data: [],
   recordCount: 0,
-  filter: {
-    columnFilters: [],
+  dataTableFilter: {
+    filters: [],
     sorts: [],
     columns: []
   },
   paginate: {
-    pageSize: 10,
+    pageSize: 100,
     offset: 0
   },
   loaded: false,
@@ -41,24 +41,24 @@ export const DataGridStore = signalStore(
   withMethods(store => ({
     setColumnFilter(columnFilters: ColumnFilter[]) {
       patchState(store, state => ({
-        filter: {
-          ...state.filter,
-          columnFilters: [...columnFilters]
+        dataTableFilter: {
+          ...state.dataTableFilter,
+          filters: columnFilters
         }
       }));
     },
 
     setSorts(sorts: Sort[]) {
       patchState(store, state => ({
-        filter: {
-          ...state.filter,
+        dataTableFilter: {
+          ...state.dataTableFilter,
           sorts: [...sorts]
         }
       }));
     },
 
     setSelectedColumns(cols: Column[]) {
-      patchState(store, state => ({ filter: { ...state.filter, columns: cols } }));
+      patchState(store, state => ({ dataTableFilter: { ...state.dataTableFilter, columns: cols } }));
     },
 
     setPaginate(paginate: Paginate) {
@@ -67,10 +67,10 @@ export const DataGridStore = signalStore(
 
     clearFilters() {
       patchState(store, state => ({
-        filter: {
-          ...state.filter,
+        dataTableFilter: {
+          ...state.dataTableFilter,
           sorts: [],
-          columnFilters: []
+          dataTableFilter: initialState.dataTableFilter
         }
       }));
     }
@@ -89,7 +89,7 @@ export const DataGridStore = signalStore(
     },
 
     _setColumns(columns: Column[]) {
-      patchState(store, state => ({ columns, filter: { ...state.filter, columns } }));
+      patchState(store, state => ({ columns, dataTableFilter: { ...state.dataTableFilter, columns } }));
     },
 
     _setRecordCount(recordCount: number) {
@@ -134,18 +134,18 @@ export const DataGridStore = signalStore(
             store._setError(error);
           }
         }),
-        // switchMap(() => dataGridService.getData({
-        //   filter: { ...store.filter(), columns: mapColumnsToColumnNames(store.columns()) },
-        //   paginate: store.paginate()
-        // })),
-        // tap({
-        //   next(response: ApiResponse<Record<string, number | string | Date>[]>) {
-        //     store._setData(response.data);
-        //   },
-        //   error(error: Error) {
-        //     store._setError(error);
-        //   }
-        // })
+        switchMap(() => dataGridService.getData({
+          dataTableFilter: { ...store.dataTableFilter(), columns: mapColumnsToColumnNames(store.columns()) },
+          paginate: store.paginate()
+        })),
+        tap({
+          next(response: ApiResponse<Record<string, number | string | Date>[]>) {
+            store._setData(response.data);
+          },
+          error(error: Error) {
+            store._setError(error);
+          }
+        })
       )
     )
   })),

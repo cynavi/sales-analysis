@@ -4,18 +4,18 @@ export type Column = {
   type: 'text' | 'number' | 'date';
 };
 
-export type Filter = {
+export type DataTableFilter = {
   columns: Column[];
-  columnFilters: ColumnFilter[];
+  filters: ColumnFilter[];
   sorts: Sort[];
 };
 
 export type ColumnFilter = {
   column: string;
-  filters: {
+  operator: string;
+  columnFilters: {
     value: string | number;
     matchMode: string;
-    operator: string;
   }[];
 };
 
@@ -30,6 +30,6 @@ export type Paginate = {
 };
 
 export type DataGridCriteria = {
-  filter: Omit<Filter, 'columns'> & { columns: string[] };
+  dataTableFilter: Omit<DataTableFilter, 'columns'> & { columns: string[] };
   paginate: Paginate;
 };

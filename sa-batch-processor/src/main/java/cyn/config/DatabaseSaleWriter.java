@@ -1,7 +1,7 @@
 package cyn.config;
 
 import cyn.entity.Sale;
-import cyn.repository.SaleRepository;
+import cyn.service.BatchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.Chunk;
@@ -11,15 +11,15 @@ public class DatabaseSaleWriter implements ItemWriter<Sale> {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseSaleWriter.class);
 
-    private final SaleRepository saleRepository;
+    private final BatchService batchService;
 
-    public DatabaseSaleWriter(SaleRepository saleRepository) {
-        this.saleRepository = saleRepository;
+    public DatabaseSaleWriter(BatchService batchService) {
+        this.batchService = batchService;
     }
 
     @Override
-    public void write(Chunk<? extends Sale> sale) throws Exception {
+    public void write(Chunk<? extends Sale> sale) {
         logger.info("Writing sales to database with size {}", sale.size());
-        sale.getItems().forEach(saleRepository::save);
+        sale.getItems().forEach(this.batchService::save);
     }
 }

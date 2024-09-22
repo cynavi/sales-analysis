@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Column, DataGridCriteria } from './data-grid';
-import { Observable, of } from 'rxjs';
+import { Column, DataGridCriteria, DataTableFilter } from './data-grid';
+import { Observable } from 'rxjs';
 import { ApiResponse } from '../model/api-response';
 import { environment } from '../../../environment';
 
@@ -11,21 +11,18 @@ export class DataGridService {
   #httpClient = inject(HttpClient);
 
   getData(criteria: DataGridCriteria): Observable<ApiResponse<Record<string, number | string | Date>[]>> {
-    // return this.#httpClient.post<ApiResponse<Record<string, number | string | Date>[]>>(`http://localhost:8081/sales`, criteria);
-    return this.#httpClient.get<ApiResponse<Record<string, number | string | Date>[]>>(`http://localhost:8081/data.json`);
+    return this.#httpClient.post<ApiResponse<Record<string, number | string | Date>[]>>(`${environment.serviceUrl}/sales`, criteria);
   }
 
   getColumns(): Observable<ApiResponse<Column[]>> {
-    return this.#httpClient.get<ApiResponse<Column[]>>(`http://localhost:8081/columns.json`);
-    // return this.#httpClient.get<ApiResponse<Column[]>>(`http://localhost:8081/columns`);
+    return this.#httpClient.get<ApiResponse<Column[]>>(`${environment.serviceUrl}/columns`);
   }
 
   getRecordCount(): Observable<ApiResponse<{ recordCount: number }>> {
-    // return this.#httpClient.get<ApiResponse<{ recordCount: number }>>('http://localhost:8081/sales/count');
-    return of({ data: { recordCount: 543323 } });
+    return this.#httpClient.get<ApiResponse<{ recordCount: number }>>(`${environment.serviceUrl}/sales/count`);
   }
 
-  generateCsv(criteria: DataGridCriteria) {
-    return this.#httpClient.post(`${environment.producerUrl}/generate`, criteria)
+  generateCsv(dataTableFilter: DataTableFilter) {
+    return this.#httpClient.post(`${environment.producerUrl}/generate`, dataTableFilter);
   }
 }

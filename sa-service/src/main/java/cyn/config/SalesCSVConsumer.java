@@ -1,6 +1,6 @@
 package cyn.config;
 
-import cyn.service.SalesService;
+import cyn.service.SaleService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,15 +14,15 @@ public class SalesCSVConsumer {
 
     private static final Logger logger = LoggerFactory.getLogger(SalesCSVConsumer.class);
 
-    private final SalesService salesService;
+    private final SaleService saleService;
 
-    public SalesCSVConsumer(SalesService salesService) {
-        this.salesService = salesService;
+    public SalesCSVConsumer(SaleService saleService) {
+        this.saleService = saleService;
     }
 
     @KafkaListener(topics = "sa-csv", groupId = "sa-csv-group")
     public void onMessage(ConsumerRecord<String, String> consumerRecord) {
         logger.info("Got sales csv request: {}", consumerRecord);
-        salesService.processCSVRequest(consumerRecord);
+        saleService.processCSVRequest(consumerRecord);
     }
 }

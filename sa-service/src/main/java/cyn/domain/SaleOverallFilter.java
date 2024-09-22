@@ -2,10 +2,11 @@ package cyn.domain;
 
 import jakarta.validation.constraints.NotNull;
 
-public record Criteria(
+import java.util.Date;
+
+public record SaleOverallFilter(
         @NotNull
-        Filter filter,
+        Date from,
         @NotNull
-        Paginate paginate
-) {
+        Date to) {
 }

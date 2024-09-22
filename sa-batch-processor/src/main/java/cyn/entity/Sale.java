@@ -27,7 +27,11 @@ public class Sale {
     BigDecimal unitPrice;
 
     Long customerId;
+
+    @Transient
     String country;
+
+    String countryCode;
 
     public Long getId() {
         return id;
@@ -101,6 +105,14 @@ public class Sale {
         this.country = country;
     }
 
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
     @Override
     public String toString() {
         return "Sale{" +
@@ -111,7 +123,7 @@ public class Sale {
                 ", invoiceDate=" + invoiceDate +
                 ", unitPrice=" + unitPrice +
                 ", customerId=" + customerId +
-                ", country='" + country + '\'' +
+                ", countryCode='" + countryCode + '\'' +
                 '}';
     }
 }

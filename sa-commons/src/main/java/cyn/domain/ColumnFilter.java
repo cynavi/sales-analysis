@@ -1,7 +1,7 @@
 package cyn.domain;
 
 public record ColumnFilter(
-        String column,
-        Operator operator
+        String value,
+        MatchMode matchMode
 ) {
 }
