@@ -1,5 +1,5 @@
 import { Directive, input } from '@angular/core';
-import { Column } from './data-grid';
+import { Column } from './data-table';
 
 @Directive({
   standalone: true,

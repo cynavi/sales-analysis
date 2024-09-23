@@ -1,16 +1,16 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Column, DataGridCriteria, DataTableFilter } from './data-grid';
+import { Column, DataTableCriteria, DataTableFilter } from './data-table';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../model/api-response';
 import { environment } from '../../../environment';
 
 @Injectable()
-export class DataGridService {
+export class DataTableService {
 
   #httpClient = inject(HttpClient);
 
-  getData(criteria: DataGridCriteria): Observable<ApiResponse<Record<string, number | string | Date>[]>> {
+  getData(criteria: DataTableCriteria): Observable<ApiResponse<Record<string, number | string | Date>[]>> {
     return this.#httpClient.post<ApiResponse<Record<string, number | string | Date>[]>>(`${environment.serviceUrl}/sales`, criteria);
   }
 

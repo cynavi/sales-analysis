@@ -1,4 +1,4 @@
-import { Column } from './data-grid';
+import { Column } from './data-table';
 
 export const mapColumnsToColumnNames = (columns: Column[]): string[] => {
   const names: string[] = [];

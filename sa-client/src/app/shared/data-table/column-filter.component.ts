@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { Column } from './data-grid';
+import { Column } from './data-table';
 import { FilterMatchMode, SelectItem } from 'primeng/api';
 import { TableModule } from 'primeng/table';
 

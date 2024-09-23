@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { ChoroplethMapComponent } from '../shared/chart/choropleth-map/choropleth-map.component';
-import { DataGridComponent } from '../shared/data-grid/data-grid.component';
+import { DataTableComponent } from '../shared/data-table/data-table.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
     ChoroplethMapComponent,
-    DataGridComponent
+    DataTableComponent
   ],
   template: `
     <app-choropleth-map></app-choropleth-map>

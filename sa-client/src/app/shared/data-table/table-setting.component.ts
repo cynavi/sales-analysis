@@ -3,7 +3,7 @@ import { DialogModule } from 'primeng/dialog';
 import { Button } from 'primeng/button';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PickListModule } from 'primeng/picklist';
-import { Column } from './data-grid';
+import { Column } from './data-table';
 
 @Component({
   selector: 'app-table-setting',

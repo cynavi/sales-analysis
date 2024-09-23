@@ -3,15 +3,15 @@
     (onFilter)="onFilterChange($event)"
     (onPage)="onPaginate($event)"
     (onSort)="onSortChange($event)"
-    [columns]="dgStore.dataTableFilter.columns()"
+    [columns]="dataTableStore.dataTableFilter.columns()"
     [lazy]="true"
     [paginator]="true"
     [rowsPerPageOptions]="[100, 200, 500, 1000]"
-    [rows]="dgStore.paginate.pageSize()"
+    [rows]="dataTableStore.paginate.pageSize()"
     [scrollable]="true"
     [sortMode]="'multiple'"
-    [totalRecords]="dgStore.recordCount()"
-    [value]="dgStore.data()"
+    [totalRecords]="dataTableStore.recordCount()"
+    [value]="dataTableStore.data()"
     scrollHeight="80vh"
   >
     <ng-template pTemplate="caption">
@@ -41,7 +41,7 @@
       </div>
     </ng-template>
 
-    <ng-template [inferHeader]="dgStore.dataTableFilter.columns()" let-columns pTemplate="header">
+    <ng-template [inferHeader]="dataTableStore.dataTableFilter.columns()" let-columns pTemplate="header">
       <tr class="sticky">
         @for (col of columns; track col.name; let index = $index) {
           <th [pSortableColumn]="col.name">

@@ -21,7 +21,7 @@ export type ColumnFilter = {
 
 export type Sort = {
   column: string;
-  order: 'asc' | 'desc'
+  sortOrder: 'ASC' | 'DESC'
 };
 
 export type Paginate = {
@@ -29,7 +29,7 @@ export type Paginate = {
   offset: number;
 };
 
-export type DataGridCriteria = {
+export type DataTableCriteria = {
   dataTableFilter: Omit<DataTableFilter, 'columns'> & { columns: string[] };
   paginate: Paginate;
 };

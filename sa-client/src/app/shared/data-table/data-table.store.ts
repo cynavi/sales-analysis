@@ -1,14 +1,14 @@
-import { Column, ColumnFilter, DataGridCriteria, DataTableFilter, Paginate, Sort } from './data-grid';
+import { Column, ColumnFilter, DataTableCriteria, DataTableFilter, Paginate, Sort } from './data-table';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { inject } from '@angular/core';
-import { DataGridService } from './data-grid.service';
+import { DataTableService } from './data-table.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import { ApiResponse } from '../model/api-response';
 import { mapColumnsToColumnNames } from './data-grid.util';
 
-type DataGridState = {
+type DataTableState = {
   data: Record<string, number | string | Date>[];
   recordCount: number;
   dataTableFilter: DataTableFilter;
@@ -18,7 +18,7 @@ type DataGridState = {
   error: Error | null;
 };
 
-const initialState: DataGridState = {
+const initialState: DataTableState = {
   data: [],
   recordCount: 0,
   dataTableFilter: {
@@ -35,8 +35,8 @@ const initialState: DataGridState = {
   error: null
 };
 
-export const DataGridStore = signalStore(
-  withDevtools('dataGrid'),
+export const DataTableStore = signalStore(
+  withDevtools('dataTable'),
   withState(initialState),
   withMethods(store => ({
     setColumnFilter(columnFilters: ColumnFilter[]) {
@@ -97,11 +97,11 @@ export const DataGridStore = signalStore(
     }
   })),
   // TODO: handle response error
-  withMethods((store, dataGridService = inject(DataGridService)) => ({
-    getDataGridData: rxMethod<DataGridCriteria>(
+  withMethods((store, dataTableService = inject(DataTableService)) => ({
+    getDataTableData: rxMethod<DataTableCriteria>(
       pipe(
         tap(() => store._setLoading()),
-        switchMap((criteria) => dataGridService.getData(criteria)),
+        switchMap((criteria) => dataTableService.getData(criteria)),
         tap({
           next(response: ApiResponse<Record<string, number | string | Date>[]>) {
             store._setData(response.data);
@@ -116,7 +116,7 @@ export const DataGridStore = signalStore(
     _initialLoad: rxMethod<void>(
       pipe(
         tap(() => store._setLoading()),
-        switchMap(() => dataGridService.getColumns()),
+        switchMap(() => dataTableService.getColumns()),
         tap({
           next(response: ApiResponse<Column[]>) {
             store._setColumns(response.data);
@@ -125,7 +125,7 @@ export const DataGridStore = signalStore(
             store._setError(error);
           }
         }),
-        switchMap(() => dataGridService.getRecordCount()),
+        switchMap(() => dataTableService.getRecordCount()),
         tap({
           next(response: ApiResponse<{ recordCount: number }>) {
             store._setRecordCount(response.data.recordCount);
@@ -134,7 +134,7 @@ export const DataGridStore = signalStore(
             store._setError(error);
           }
         }),
-        switchMap(() => dataGridService.getData({
+        switchMap(() => dataTableService.getData({
           dataTableFilter: { ...store.dataTableFilter(), columns: mapColumnsToColumnNames(store.columns()) },
           paginate: store.paginate()
         })),

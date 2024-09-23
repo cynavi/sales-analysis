@@ -7,7 +7,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
-import { Column, ColumnFilter, Sort } from './data-grid';
+import { Column, ColumnFilter, Sort } from './data-table';
 import { ColumnFilterComponent } from './column-filter.component';
 import { InferBodyDirective } from './infer-body.directive';
 import { InferHeaderDirective } from './infer-header.directive';
@@ -17,12 +17,12 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TableSettingComponent } from './table-setting.component';
 import { FilterMetadata, MessageService, SortMeta } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
-import { DataGridStore } from './data-grid.store';
+import { DataTableStore } from './data-table.store';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { filter, skip, switchMap } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import { mapColumnsToColumnNames } from './data-grid.util';
-import { DataGridService } from './data-grid.service';
+import { DataTableService } from './data-table.service';
 
 @Component({
   selector: 'app-data-grid',
@@ -48,28 +48,28 @@ import { DataGridService } from './data-grid.service';
   providers: [
     { provide: DialogService, useClass: DialogService },
   ],
-  templateUrl: './data-grid.component.html',
-  styleUrl: './data-grid.component.scss'
+  templateUrl: './data-table.component.html',
+  styleUrl: './data-table.component.scss'
 })
-export class DataGridComponent {
+export class DataTableComponent {
 
   #dialogService = inject(DialogService);
   #messageService = inject(MessageService);
-  #dataTableService = inject(DataGridService);
-  dgStore = inject(DataGridStore);
+  #dataTableService = inject(DataTableService);
+  dataTableStore = inject(DataTableStore);
 
   dialogRef!: DynamicDialogRef<TableSettingComponent>;
   unused = toSignal(toObservable(computed(() => ({
     dataTableFilter: {
-      columns: mapColumnsToColumnNames(this.dgStore.dataTableFilter.columns()),
-      filters: this.dgStore.dataTableFilter.filters(),
-      sorts: this.dgStore.dataTableFilter.sorts()
+      columns: mapColumnsToColumnNames(this.dataTableStore.dataTableFilter.columns()),
+      filters: this.dataTableStore.dataTableFilter.filters(),
+      sorts: this.dataTableStore.dataTableFilter.sorts()
     },
-    paginate: this.dgStore.paginate()
+    paginate: this.dataTableStore.paginate()
   }))).pipe(
     filter(criteria => !!criteria.dataTableFilter.columns.length),
     skip(1),
-    switchMap(async (criteria) => this.dgStore.getDataGridData(criteria))
+    switchMap(async (criteria) => this.dataTableStore.getDataTableData(criteria))
   ));
 
   constructor() {
@@ -81,7 +81,7 @@ export class DataGridComponent {
   }
 
   onPaginate(event: TablePageEvent) {
-    this.dgStore.setPaginate({
+    this.dataTableStore.setPaginate({
       pageSize: event.rows,
       offset: event.first
     });
@@ -110,15 +110,15 @@ export class DataGridComponent {
         columnFilters.push({ ...columnFilter, operator });
       }
     }
-    this.dgStore.setColumnFilter(columnFilters);
+    this.dataTableStore.setColumnFilter(columnFilters);
   }
 
   openTableSettings(): void {
     this.dialogRef = this.#dialogService.open(TableSettingComponent, {
       header: 'Table Settings',
       data: {
-        selectedColumns: [...this.dgStore.dataTableFilter.columns()],
-        columns: [...this.dgStore.columns()]
+        selectedColumns: [...this.dataTableStore.dataTableFilter.columns()],
+        columns: [...this.dataTableStore.columns()]
       },
       width: '50vw',
       modal: true,
@@ -132,7 +132,7 @@ export class DataGridComponent {
 
     this.dialogRef.onClose.subscribe((columns: Column[]) => {
       if (!!columns?.length) {
-        this.dgStore.setSelectedColumns(columns);
+        this.dataTableStore.setSelectedColumns(columns);
         this.#messageService.add({ detail: 'Table settings applied.' });
       }
     });
@@ -141,12 +141,12 @@ export class DataGridComponent {
   onSortChange($event: { multisortmeta: SortMeta[] }): void {
     const sorts: Sort[] = [];
     $event.multisortmeta.forEach(sortMeta => {
-      sorts.push({ column: sortMeta.field, order: sortMeta.order == 1 ? 'desc' : 'asc' });
+      sorts.push({ column: sortMeta.field, sortOrder: sortMeta.order == 1 ? 'DESC' : 'ASC' });
     });
-    this.dgStore.setSorts(sorts);
+    this.dataTableStore.setSorts(sorts);
   }
 
   generateCsv(): void {
-    this.#dataTableService.generateCsv(this.dgStore.dataTableFilter()).subscribe();
+    this.#dataTableService.generateCsv(this.dataTableStore.dataTableFilter()).subscribe();
   }
 }
