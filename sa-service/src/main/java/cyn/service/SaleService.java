@@ -111,7 +111,7 @@ public class SaleService {
             query.append(" order by ");
             criteria.dataTableFilter().sorts().forEach(sort -> query.append(sort.column())
                     .append(" ")
-                    .append(sort.sortOrder())
+                    .append(sort.sortOrder().getValue())
                     .append(", "));
             query.deleteCharAt(query.lastIndexOf(","));
         }

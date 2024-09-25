@@ -11,6 +11,10 @@ public enum SortOrder {
         this.value = value;
     }
 
+    public String getValue() {
+        return value;
+    }
+
     @JsonCreator
     public static SortOrder fromValue(String value) {
         System.out.println(value);

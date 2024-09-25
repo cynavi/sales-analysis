@@ -76,7 +76,7 @@ public class FilterUtil {
                 }
             });
             if (i != columnFilters.size() - 1) {
-                query.append(" ").append(operator).append(" ");
+                query.append(" ").append(operator.getValue()).append(" ");
             }
         }
         var queryAndParams = new HashMap<String, Object>();

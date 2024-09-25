@@ -47,7 +47,7 @@ public class ExcelToDatabaseJobConfig {
     @Bean
     public Step step1() {
         return new StepBuilder("excelFileToStep1", jobRepository)
-                .<Sale, Sale>chunk(1, transactionManager)
+                .<Sale, Sale>chunk(10000, transactionManager)
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())

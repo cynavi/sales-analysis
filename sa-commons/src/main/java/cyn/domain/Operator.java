@@ -14,6 +14,10 @@ public enum Operator {
         this.value = value;
     }
 
+    public String getValue() {
+        return value;
+    }
+
     @JsonCreator
     public static Operator fromValue(String value) {
         for (Operator operator : Operator.values()) {

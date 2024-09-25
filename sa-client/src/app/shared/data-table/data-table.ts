@@ -21,7 +21,7 @@ export type ColumnFilter = {
 
 export type Sort = {
   column: string;
-  sortOrder: 'ASC' | 'DESC'
+  sortOrder: 'asc' | 'desc'
 };
 
 export type Paginate = {
