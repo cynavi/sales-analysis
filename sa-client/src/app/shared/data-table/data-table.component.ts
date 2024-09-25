@@ -141,7 +141,7 @@ export class DataTableComponent {
   onSortChange($event: { multisortmeta: SortMeta[] }): void {
     const sorts: Sort[] = [];
     $event.multisortmeta.forEach(sortMeta => {
-      sorts.push({ column: sortMeta.field, sortOrder: sortMeta.order == 1 ? 'DESC' : 'ASC' });
+      sorts.push({ column: sortMeta.field, sortOrder: sortMeta.order == 1 ? 'desc' : 'asc' });
     });
     this.dataTableStore.setSorts(sorts);
   }

@@ -3,7 +3,6 @@ Processes, visualizes, and allows export to CSV using Angular, Spring Boot, Apac
 for transactions occurring between 2010 Dec 01 and 2011 Des 09 for a UK-based and registered non-store online retail.
 
 ## Tech Stack
-
 - TypeScript
 - Angular - Used for building client side SPA
 - Primeng - Used for creating data table
@@ -18,7 +17,6 @@ for transactions occurring between 2010 Dec 01 and 2011 Des 09 for a UK-based an
 ## Project Structure
 
 ## sa-client
-
 Client application for sa-client. Features a choropleth map built using D3.js that visualizes total sales by country
 and a comprehensive data table showing sales data.
 
