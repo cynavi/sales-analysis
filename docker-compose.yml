@@ -1,0 +1,104 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - sales-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - sales-network
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: sales_user
+      POSTGRES_PASSWORD: sales_password
+      POSTGRES_DB: sales_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - sales-network
+
+  sa-client:
+    build: ./sa-client
+    ports:
+      - "4200:4200"
+    depends_on:
+      - sa-service
+    networks:
+      - sales-network
+
+  sa-assets:
+    build: ./sa-assets
+    ports:
+      - "8080:8080"
+    networks:
+      - sales-network
+
+  sa-producer:
+    build: ./sa-producer
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sales_db
+      SPRING_DATASOURCE_USERNAME: sales_user
+      SPRING_DATASOURCE_PASSWORD: sales_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - sales-network
+
+  sa-service:
+    build: ./sa-service
+    depends_on:
+      - kafka
+      - postgres
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sales_db
+      SPRING_DATASOURCE_USERNAME: sales_user
+      SPRING_DATASOURCE_PASSWORD: sales_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - sales-network
+
+  sa-batch-processor:
+    build: ./sa-batch-processor
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/sales_db
+      SPRING_DATASOURCE_USERNAME: sales_user
+      SPRING_DATASOURCE_PASSWORD: sales_password
+    networks:
+      - sales-network
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  sales-network:
+    driver: bridge
