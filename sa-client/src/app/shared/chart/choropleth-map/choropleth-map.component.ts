@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import * as d3Projection from 'd3-geo-projection';
@@ -6,15 +6,13 @@ import * as d3Legend from 'd3-svg-legend';
 import * as GeoJSON from 'geojson';
 import { CurrencyPipe } from '@angular/common';
 import { ChoroplethMapService } from './choropleth-map.service';
-import { ChoroplethMapStore } from './choropleth-map.store';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { CardModule } from 'primeng/card';
 import { AccordionModule } from 'primeng/accordion';
 import { CalendarModule } from 'primeng/calendar';
 import { FormsModule } from '@angular/forms';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { skip, switchMap } from 'rxjs';
 import { format } from 'date-fns';
+import { ChoroplethMapStore } from './choropleth-map.store';
 
 @Component({
   selector: 'app-choropleth-map',
@@ -63,17 +61,15 @@ import { format } from 'date-fns';
       font-size: 0.6rem;
       fill: rgba(255, 255, 255, 0.87);
     }
-
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChoroplethMapComponent implements OnInit {
+export class ChoroplethMapComponent {
 
   currencyPipe = inject(CurrencyPipe);
   choroplethMapStore = inject(ChoroplethMapStore);
-
   dateRange: Date[] = [new Date(2010, 12, 1), new Date(2011, 12, 9)];
-  allowedRange: [Date, Date] = [new Date(2010, 12, 1), new Date(2011, 12, 9)] as const;
+  readonly allowedRange: [Date, Date] = [new Date(2010, 12, 1), new Date(2011, 12, 9)] as const;
   svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown>;
   polygon: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
   lines: d3.Selection<SVGGElement, unknown, HTMLElement, unknown>;
@@ -86,10 +82,6 @@ export class ChoroplethMapComponent implements OnInit {
     .center([0, 0])
     .translate([this.width / 2.2, this.height / 2]);
   path: d3.GeoPath<unknown, d3.GeoPermissibleObjects> = d3.geoPath().projection(this.projection);
-  unused = toSignal(toObservable(computed(() => this.choroplethMapStore.filter())).pipe(
-    skip(1),
-    switchMap(async (filter) => this.choroplethMapStore.getData(filter))
-  ));
 
   constructor() {
     effect(() => {
@@ -98,10 +90,6 @@ export class ChoroplethMapComponent implements OnInit {
         this.prepareChart();
       }
     });
-  }
-
-  ngOnInit() {
-
   }
 
   prepareChart(): void {
@@ -250,7 +238,7 @@ export class ChoroplethMapComponent implements OnInit {
   onFilter(): void {
     const from = this.dateRange[0], to = this.dateRange[1];
     if (from && to) {
-      this.choroplethMapStore.setFilter({ from, to });
+      this.choroplethMapStore.fetch$.next({ from, to });
     }
   }
 }

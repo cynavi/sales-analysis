@@ -65,8 +65,8 @@ export class DataTableStore {
         error: err => this.setError(err)
       }),
       switchMap(() => this.#dataTableService.getData({
-        dataTableFilter: { ...this.#state.dataTableFilter(), columns: mapColumnsToColumnNames(this.#state.columns()) },
-        paginate: this.#state.dataTableFilter.paginate()
+        ...this.#state.dataTableFilter(),
+        columns: mapColumnsToColumnNames(this.#state.columns()),
       })),
       tap({
         next: (response: ApiResponse<DataTableState['rowData']>) => this.setRowData(response.data),
@@ -80,11 +80,8 @@ export class DataTableStore {
       filter(dataTableFilter => !!dataTableFilter.columns.length),
       tap(() => this.setLoading()),
       map((dataTableFilter): DataTableCriteria => ({
-        dataTableFilter: {
-          ...dataTableFilter,
-          columns: mapColumnsToColumnNames(dataTableFilter.columns)
-        },
-        paginate: dataTableFilter.paginate
+        ...dataTableFilter,
+        columns: mapColumnsToColumnNames(dataTableFilter.columns),
       })),
       switchMap(criteria => this.#dataTableService.getData(criteria)),
       tap({

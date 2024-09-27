@@ -1,11 +1,9 @@
+import { inject, Injectable } from '@angular/core';
 import { Topology } from 'topojson-specification';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
-import { withDevtools } from '@angular-architects/ngrx-toolkit';
-import { subYears } from 'date-fns';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap, zipWith } from 'rxjs';
-import { inject } from '@angular/core';
+import { patchState, signalState } from '@ngrx/signals';
 import { ChoroplethMapService } from './choropleth-map.service';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { pipe, Subject, switchMap, tap, zipWith } from 'rxjs';
 import { ApiResponse } from '../../model/api-response';
 
 type ChoroplethMapState = {
@@ -32,72 +30,66 @@ const initialState: ChoroplethMapState = {
   error: null
 };
 
-export const ChoroplethMapStore = signalStore(
-  withDevtools("choroplethMap"),
-  withState(initialState),
-  withMethods(store => ({
-    setFilter(filter: { from: Date; to: Date; }) {
-      patchState(store, () => ({ filter }));
-    }
-  })),
-  withMethods(store => ({
-    _setData(data: Map<string, number>[]) {
-      patchState(store, () => ({ data, loaded: true, error: null }));
-    },
+@Injectable()
+export class ChoroplethMapStore {
 
-    _setError(error: Error) {
-      patchState(store, () => ({ loaded: true, error: error }));
-    },
+  readonly #choroplethMapService = inject(ChoroplethMapService);
+  readonly #state = signalState<ChoroplethMapState>(initialState);
 
-    _setLoading() {
-      patchState(store, () => ({ loaded: false, error: null }));
-    }
-  })),
-  withMethods((store, choroplethMapService = inject(ChoroplethMapService)) => ({
-    _initialLoad: rxMethod<void>(
-      pipe(
-        tap(() => store._setLoading()),
-        zipWith(
-          choroplethMapService.fetchWorldPolygon(),
-          choroplethMapService.fetchWorldLines(),
-          choroplethMapService.fetchSalesData(store.filter())
-        ),
-        tap({
-          next(response) {
-            patchState(store, state => ({
-              ...state,
-              worldPolygons: response[1],
-              worldLines: response[2],
-              data: response[3].data,
-              loaded: true,
-              error: null
-            }));
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
-        })
-      )
-    ),
+  readonly data = this.#state.data;
+  readonly worldLines = this.#state.worldLines;
+  readonly worldPolygons = this.#state.worldPolygons;
+  readonly loaded = this.#state.loaded;
+  readonly error = this.#state.error;
 
-    getData: rxMethod<{ from: Date; to: Date }>(
-      pipe(
-        tap(() => store._setLoading()),
-        switchMap((filter) => choroplethMapService.fetchSalesData(filter)),
-        tap({
-          next(response: ApiResponse<Map<string, number>[]>) {
-            store._setData(response.data);
-          },
+  fetch$ = new Subject<{ from: Date; to: Date; }>();
 
-          error(error: Error) {
-            store._setError(error);
-          }
-        })
-      ))
-  })),
-  withHooks({
-    onInit(store) {
-      store._initialLoad();
-    }
-  })
-)
+  #loadData = rxMethod<{ from: Date; to: Date }>(
+    pipe(
+      tap(() => this.setLoading()),
+      switchMap(filter => this.#choroplethMapService.fetchSalesData(filter)),
+      tap({
+        next: (response: ApiResponse<Map<string, number>[]>) => patchState(this.#state, () => ({
+          data: response.data,
+          loaded: true,
+          error: null
+        })),
+        error: err => this.setError(err)
+      })
+    ));
+
+  #loadWorldPolygonsAndLines = rxMethod<void>(
+    pipe(
+      tap(() => this.setLoading()),
+      zipWith(
+        this.#choroplethMapService.fetchWorldPolygon(),
+        this.#choroplethMapService.fetchWorldLines(),
+        this.#choroplethMapService.fetchSalesData(this.#state.filter()),
+      ),
+      tap({
+        next: response => patchState(this.#state, state => ({
+          ...state,
+          worldPolygons: response[1],
+          worldLines: response[2],
+          data: response[3].data,
+          loaded: true,
+          error: null
+        })),
+        error: err => this.setError(err)
+      })
+    )
+  );
+
+  constructor() {
+    this.#loadWorldPolygonsAndLines();
+    this.#loadData(this.fetch$);
+  }
+
+  private setError(error: Error) {
+    patchState(this.#state, () => ({ loaded: true, error: error }));
+  }
+
+  private setLoading() {
+    patchState(this.#state, () => ({ loaded: false, error: null }));
+  }
+}
