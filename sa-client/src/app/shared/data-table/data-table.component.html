@@ -3,16 +3,18 @@
     (onFilter)="onFilterChange($event)"
     (onPage)="onPaginate($event)"
     (onSort)="onSortChange($event)"
-    [columns]="dataTableStore.dataTableFilter.columns()"
+    [columns]="dataTableStore.columns()"
     [lazy]="true"
     [paginator]="true"
     [rowsPerPageOptions]="[100, 200, 500, 1000]"
-    [rows]="dataTableStore.paginate.pageSize()"
+    [rows]="dataTableStore.dataTableFilter.paginate.pageSize()"
     [scrollable]="true"
     [sortMode]="'multiple'"
     [totalRecords]="dataTableStore.recordCount()"
-    [value]="dataTableStore.data()"
+    [value]="dataTableStore.rowData()"
     scrollHeight="80vh"
+    [loading]="!dataTableStore.loaded()"
+    [showLoader]="false"
   >
     <ng-template pTemplate="caption">
       <div class="justify-between items-center">
@@ -67,6 +69,10 @@
           </td>
         }
       </tr>
+    </ng-template>
+
+    <ng-template pTemplate="loadingbody">
+      <p-progressBar mode="indeterminate" [style]="{ height: '2px' }" />
     </ng-template>
   </p-table>
 </div>

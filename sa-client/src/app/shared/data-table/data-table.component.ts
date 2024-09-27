@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -17,12 +17,10 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TableSettingComponent } from './table-setting.component';
 import { FilterMetadata, MessageService, SortMeta } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
-import { DataTableStore } from './data-table.store';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { filter, skip, switchMap } from 'rxjs';
 import { DatePipe } from '@angular/common';
-import { mapColumnsToColumnNames } from './data-grid.util';
 import { DataTableService } from './data-table.service';
+import { DataTableStore } from './data-table.store';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 @Component({
   selector: 'app-data-grid',
@@ -43,10 +41,13 @@ import { DataTableService } from './data-table.service';
     TooltipModule,
     MessagesModule,
     ButtonModule,
-    DatePipe
+    DatePipe,
+    ProgressBarModule
   ],
   providers: [
     { provide: DialogService, useClass: DialogService },
+    DataTableStore,
+    DataTableService
   ],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
@@ -59,18 +60,6 @@ export class DataTableComponent {
   dataTableStore = inject(DataTableStore);
 
   dialogRef!: DynamicDialogRef<TableSettingComponent>;
-  unused = toSignal(toObservable(computed(() => ({
-    dataTableFilter: {
-      columns: mapColumnsToColumnNames(this.dataTableStore.dataTableFilter.columns()),
-      filters: this.dataTableStore.dataTableFilter.filters(),
-      sorts: this.dataTableStore.dataTableFilter.sorts()
-    },
-    paginate: this.dataTableStore.paginate()
-  }))).pipe(
-    filter(criteria => !!criteria.dataTableFilter.columns.length),
-    skip(1),
-    switchMap(async (criteria) => this.dataTableStore.getDataTableData(criteria))
-  ));
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {
@@ -81,9 +70,12 @@ export class DataTableComponent {
   }
 
   onPaginate(event: TablePageEvent) {
-    this.dataTableStore.setPaginate({
-      pageSize: event.rows,
-      offset: event.first
+    this.dataTableStore.fetch$.next({
+      ...this.dataTableStore.dataTableFilter(),
+      paginate: {
+        pageSize: event.rows,
+        offset: event.first
+      }
     });
   }
 
@@ -110,7 +102,10 @@ export class DataTableComponent {
         columnFilters.push({ ...columnFilter, operator });
       }
     }
-    this.dataTableStore.setColumnFilter(columnFilters);
+    this.dataTableStore.fetch$.next({
+      ...this.dataTableStore.dataTableFilter(),
+      filters: columnFilters
+    });
   }
 
   openTableSettings(): void {
@@ -132,7 +127,7 @@ export class DataTableComponent {
 
     this.dialogRef.onClose.subscribe((columns: Column[]) => {
       if (!!columns?.length) {
-        this.dataTableStore.setSelectedColumns(columns);
+        this.dataTableStore.fetch$.next({ ...this.dataTableStore.dataTableFilter(), columns });
         this.#messageService.add({ detail: 'Table settings applied.' });
       }
     });
@@ -143,7 +138,7 @@ export class DataTableComponent {
     $event.multisortmeta.forEach(sortMeta => {
       sorts.push({ column: sortMeta.field, sortOrder: sortMeta.order == 1 ? 'desc' : 'asc' });
     });
-    this.dataTableStore.setSorts(sorts);
+    this.dataTableStore.fetch$.next({ ...this.dataTableStore.dataTableFilter(), sorts });
   }
 
   generateCsv(): void {

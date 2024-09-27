@@ -2,8 +2,6 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SocketConnectService } from './socket-connect.service';
 import { ToastModule } from 'primeng/toast';
-import { DataTableStore } from './shared/data-table/data-table.store';
-import { DataTableService } from './shared/data-table/data-table.service';
 import { ToolbarComponent } from './shared/toolbar/toolbar.component';
 
 @Component({
@@ -15,8 +13,6 @@ import { ToolbarComponent } from './shared/toolbar/toolbar.component';
     ToolbarComponent,
   ],
   providers: [
-    DataTableStore,
-    { provide: DataTableService, useClass: DataTableService }
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'

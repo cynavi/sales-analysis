@@ -1,157 +1,113 @@
-import { Column, ColumnFilter, DataTableCriteria, DataTableFilter, Paginate, Sort } from './data-table';
-import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
-import { inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { Column, DataTableCriteria, DataTableFilter } from './data-table';
 import { DataTableService } from './data-table.service';
-import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
-import { withDevtools } from '@angular-architects/ngrx-toolkit';
-import { ApiResponse } from '../model/api-response';
+import { patchState, signalState } from '@ngrx/signals';
+import { filter, map, pipe, Subject, switchMap, tap } from 'rxjs';
 import { mapColumnsToColumnNames } from './data-grid.util';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
+import { ApiResponse } from '../model/api-response';
 
 type DataTableState = {
-  data: Record<string, number | string | Date>[];
+  rowData: Record<string, number | string | Date>[];
   recordCount: number;
   dataTableFilter: DataTableFilter;
   columns: Column[];
-  paginate: Paginate;
   loaded: boolean;
   error: Error | null;
 };
 
 const initialState: DataTableState = {
-  data: [],
+  rowData: [],
   recordCount: 0,
   dataTableFilter: {
     filters: [],
     sorts: [],
-    columns: []
-  },
-  paginate: {
-    pageSize: 100,
-    offset: 0
+    columns: [],
+    paginate: {
+      pageSize: 100,
+      offset: 0
+    }
   },
   loaded: false,
   columns: [],
   error: null
 };
 
-export const DataTableStore = signalStore(
-  withDevtools('dataTable'),
-  withState(initialState),
-  withMethods(store => ({
-    setColumnFilter(columnFilters: ColumnFilter[]) {
-      patchState(store, state => ({
-        dataTableFilter: {
-          ...state.dataTableFilter,
-          filters: columnFilters
-        }
-      }));
-    },
+@Injectable()
+export class DataTableStore {
 
-    setSorts(sorts: Sort[]) {
-      patchState(store, state => ({
-        dataTableFilter: {
-          ...state.dataTableFilter,
-          sorts: [...sorts]
-        }
-      }));
-    },
+  readonly #dataTableService = inject(DataTableService);
+  readonly #state = signalState<DataTableState>(initialState);
 
-    setSelectedColumns(cols: Column[]) {
-      patchState(store, state => ({ dataTableFilter: { ...state.dataTableFilter, columns: cols } }));
-    },
+  readonly rowData = this.#state.rowData;
+  readonly recordCount = this.#state.recordCount;
+  readonly dataTableFilter = this.#state.dataTableFilter;
+  readonly loaded = this.#state.loaded;
+  readonly columns = this.#state.columns;
+  readonly error = this.#state.error;
 
-    setPaginate(paginate: Paginate) {
-      patchState(store, () => ({ paginate }));
-    },
+  fetch$ = new Subject<DataTableFilter>();
 
-    clearFilters() {
-      patchState(store, state => ({
-        dataTableFilter: {
-          ...state.dataTableFilter,
-          sorts: [],
-          dataTableFilter: initialState.dataTableFilter
-        }
-      }));
-    }
-  })),
-  withMethods(store => ({
-    _setLoading() {
-      patchState(store, { loaded: false, error: null });
-    },
-
-    _setError(error: Error) {
-      patchState(store, { loaded: true, error });
-    },
-
-    _setData(data: Record<string, number | string | Date>[]) {
-      patchState(store, () => ({ loaded: true, data }));
-    },
-
-    _setColumns(columns: Column[]) {
-      patchState(store, state => ({ columns, dataTableFilter: { ...state.dataTableFilter, columns } }));
-    },
-
-    _setRecordCount(recordCount: number) {
-      patchState(store, () => ({ recordCount }));
-    }
-  })),
-  // TODO: handle response error
-  withMethods((store, dataTableService = inject(DataTableService)) => ({
-    getDataTableData: rxMethod<DataTableCriteria>(
-      pipe(
-        tap(() => store._setLoading()),
-        switchMap((criteria) => dataTableService.getData(criteria)),
-        tap({
-          next(response: ApiResponse<Record<string, number | string | Date>[]>) {
-            store._setData(response.data);
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
-        })
-      )
-    ),
-
-    _initialLoad: rxMethod<void>(
-      pipe(
-        tap(() => store._setLoading()),
-        switchMap(() => dataTableService.getColumns()),
-        tap({
-          next(response: ApiResponse<Column[]>) {
-            store._setColumns(response.data);
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
-        }),
-        switchMap(() => dataTableService.getRecordCount()),
-        tap({
-          next(response: ApiResponse<{ recordCount: number }>) {
-            store._setRecordCount(response.data.recordCount);
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
-        }),
-        switchMap(() => dataTableService.getData({
-          dataTableFilter: { ...store.dataTableFilter(), columns: mapColumnsToColumnNames(store.columns()) },
-          paginate: store.paginate()
+  #initialLoad = rxMethod<void>(
+    pipe(
+      tap(() => this.setLoading()),
+      switchMap(() => this.#dataTableService.getColumns()),
+      tap({
+        next: response => patchState(this.#state, state => ({
+          columns: response.data,
+          dataTableFilter: { ...state.dataTableFilter, columns: response.data }
         })),
-        tap({
-          next(response: ApiResponse<Record<string, number | string | Date>[]>) {
-            store._setData(response.data);
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
-        })
-      )
+        error: err => this.setError(err)
+      }),
+      switchMap(() => this.#dataTableService.getRecordCount()),
+      tap({
+        next: response => patchState(this.#state, { recordCount: response.data.recordCount }),
+        error: err => this.setError(err)
+      }),
+      switchMap(() => this.#dataTableService.getData({
+        dataTableFilter: { ...this.#state.dataTableFilter(), columns: mapColumnsToColumnNames(this.#state.columns()) },
+        paginate: this.#state.dataTableFilter.paginate()
+      })),
+      tap({
+        next: (response: ApiResponse<DataTableState['rowData']>) => this.setRowData(response.data),
+        error: err => this.setError(err)
+      })
     )
-  })),
-  withHooks({
-    onInit(store) {
-      store._initialLoad();
-    }
-  })
-);
+  );
+
+  #fetch = rxMethod<DataTableFilter>(
+    pipe(
+      filter(dataTableFilter => !!dataTableFilter.columns.length),
+      tap(() => this.setLoading()),
+      map((dataTableFilter): DataTableCriteria => ({
+        dataTableFilter: {
+          ...dataTableFilter,
+          columns: mapColumnsToColumnNames(dataTableFilter.columns)
+        },
+        paginate: dataTableFilter.paginate
+      })),
+      switchMap(criteria => this.#dataTableService.getData(criteria)),
+      tap({
+        next: (response: ApiResponse<DataTableState['rowData']>) => this.setRowData(response.data),
+        error: err => this.setError(err)
+      })
+    )
+  );
+
+  constructor() {
+    this.#initialLoad();
+    this.#fetch(this.fetch$);
+  }
+
+  private setRowData(rowData: DataTableState['rowData']): void {
+    patchState(this.#state, () => ({ loaded: true, rowData }));
+  }
+
+  private setLoading(): void {
+    patchState(this.#state, { loaded: false, error: null });
+  }
+
+  private setError(error: Error): void {
+    patchState(this.#state, { loaded: true, error });
+  }
+}

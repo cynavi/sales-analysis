@@ -17,7 +17,6 @@ public enum SortOrder {
 
     @JsonCreator
     public static SortOrder fromValue(String value) {
-        System.out.println(value);
         for (SortOrder sortOrder : SortOrder.values()) {
             if (sortOrder.value.equals(value)) {
                 return sortOrder;

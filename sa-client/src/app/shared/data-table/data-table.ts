@@ -8,6 +8,7 @@ export type DataTableFilter = {
   columns: Column[];
   filters: ColumnFilter[];
   sorts: Sort[];
+  paginate: Paginate;
 };
 
 export type ColumnFilter = {
