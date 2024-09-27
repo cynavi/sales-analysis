@@ -10,8 +10,8 @@ for transactions occurring between 2010 Dec 01 and 2011 Des 09 for a UK-based an
 - Java
 - Kafka - Message system to handle CSV export requests
 - Socket - Communication channel between client and service for streaming sales analysis report in CSV
-- Spring Boot: Used for building REST APIs, Kafka producers, and consumers
-- Spring Batch: Used for loading sales datasets into PostgreSQL
+- Spring Boot - Used for building REST APIs, Kafka producers, and consumers
+- Spring Batch - Used for loading sales datasets into PostgreSQL
 - PostgreSQL - Used for storing sales data and CSV exports information
 
 ## Project Structure
@@ -21,10 +21,10 @@ Client application for sa-client. Features a choropleth map built using D3.js th
 and a comprehensive data table showing sales data.
 
 ## sa-assets
-A static server for serving world polygons and world line data used in the choropleth map.
+Server for serving static assets like world polygons and world line data used in the choropleth map.
 
 ## sa-commons
-A shared Java library that holds domain records used across different services (e.g., sa-producer, 
+A shared Java library that holds domain records used across different services. 
 
 ## sa-batch-processor
 A Spring Batch application that ingests an online retail sales dataset into PostgreSQL.

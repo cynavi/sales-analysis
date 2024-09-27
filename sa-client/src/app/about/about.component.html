@@ -1,1 +1,46 @@
-<p>about works!</p>
+<p-card styleClass="mt-4">
+  <p>
+    This project processes, visualizes, and allows export to CSV using Angular, Spring Boot, Apache Kafka, Socket, and
+    PostgreSQL for transactions occurring between 2010 Dec 01 and 2011 Des 09 for a UK-based and registered non-store
+    online retail.
+  </p>
+
+  <p-panel header="Key Features" toggleable="true" styleClass="mt-4">
+    <ul>
+      @for (keyFeature of keyFeatures; track keyFeature.title) {
+        <li><strong>{{ keyFeature.title }}</strong>: {{ keyFeature.description }}</li>
+      }
+    </ul>
+  </p-panel>
+
+  <p-panel header="Tech Stack" toggleable="true" styleClass="mt-4">
+    <ul>
+      @for (techStack of techStacks; track techStack.title) {
+        <li><strong>{{ techStack.title }}</strong>: {{ techStack.description }}</li>
+      }
+    </ul>
+  </p-panel>
+
+  <p-panel header="Architecture" toggleable="true" styleClass="mt-4">
+    <ul>
+      @for (item of architecture; track item.title) {
+        <li><strong>{{ item.title }}</strong>: {{ item.description }}</li>
+      }
+    </ul>
+  </p-panel>
+
+  <p-panel header="How to Run Locally" toggleable="true" styleClass="mt-4">
+    <p>To run the system locally, simply clone the repositories and run the Docker Compose command:</p>
+    <pre><code class="">git clone https://github.com/cynavi/sales-analysis.git</code></pre>
+    <pre><code>docker-compose up --build</code></pre>
+    <p>The application will be available at <a href="http://localhost:4200">http://localhost:4200</a>.</p>
+  </p-panel>
+
+  <p-panel header="Future Enhancements" toggleable="true" styleClass="mt-4">
+    <ul>
+      <li>Incorporate predictive analytics to forecast future sales trends.</li>
+      <li>Allow users to customize their dashboard with various charts and graphs.</li>
+    </ul>
+  </p-panel>
+
+</p-card>

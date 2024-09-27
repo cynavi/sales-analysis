@@ -12,10 +12,14 @@ import { ToolbarComponent } from './shared/toolbar/toolbar.component';
     ToastModule,
     ToolbarComponent,
   ],
-  providers: [
-  ],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  providers: [],
+  template: `
+    <div class="min-h-screen">
+      <p-toast [life]="2000"/>
+      <app-toolbar></app-toolbar>
+      <router-outlet></router-outlet>
+    </div>
+  `
 })
 export class AppComponent {
   socket = inject(SocketConnectService);

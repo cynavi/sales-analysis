@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { Column, DataTableCriteria, DataTableFilter } from './data-table';
 import { DataTableService } from './data-table.service';
 import { patchState, signalState } from '@ngrx/signals';
@@ -6,6 +6,7 @@ import { filter, map, pipe, Subject, switchMap, tap } from 'rxjs';
 import { mapColumnsToColumnNames } from './data-grid.util';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { ApiResponse } from '../model/api-response';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 type DataTableState = {
   rowData: Record<string, number | string | Date>[];
@@ -46,7 +47,10 @@ export class DataTableStore {
   readonly columns = this.#state.columns;
   readonly error = this.#state.error;
 
-  fetch$ = new Subject<DataTableFilter>();
+  sorts$ = new Subject<DataTableFilter['sorts']>();
+  columnFilters$ = new Subject<DataTableFilter['filters']>();
+  columns$ = new Subject<DataTableFilter['columns']>();
+  paginate$ = new Subject<DataTableFilter['paginate']>();
 
   #initialLoad = rxMethod<void>(
     pipe(
@@ -93,7 +97,34 @@ export class DataTableStore {
 
   constructor() {
     this.#initialLoad();
-    this.#fetch(this.fetch$);
+    this.#fetch(computed(() => this.#state.dataTableFilter()));
+    this.sorts$
+      .pipe(takeUntilDestroyed())
+      .subscribe(sorts => patchState(this.#state, state => ({ dataTableFilter: { ...state.dataTableFilter, sorts } })));
+    this.columns$
+      .pipe(takeUntilDestroyed())
+      .subscribe(columns => patchState(this.#state, state => ({
+        dataTableFilter: {
+          ...state.dataTableFilter,
+          columns
+        }
+      })));
+    this.columnFilters$
+      .pipe(takeUntilDestroyed())
+      .subscribe(filters => patchState(this.#state, state => ({
+        dataTableFilter: {
+          ...state.dataTableFilter,
+          filters
+        }
+      })));
+    this.paginate$
+      .pipe(takeUntilDestroyed())
+      .subscribe(paginate => patchState(this.#state, state => ({
+        dataTableFilter: {
+          ...state.dataTableFilter,
+          paginate
+        }
+      })));
   }
 
   private setRowData(rowData: DataTableState['rowData']): void {

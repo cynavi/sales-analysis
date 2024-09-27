@@ -3,7 +3,7 @@
     (onFilter)="onFilterChange($event)"
     (onPage)="onPaginate($event)"
     (onSort)="onSortChange($event)"
-    [columns]="dataTableStore.columns()"
+    [columns]="dataTableStore.dataTableFilter.columns()"
     [lazy]="true"
     [paginator]="true"
     [rowsPerPageOptions]="[100, 200, 500, 1000]"
@@ -72,7 +72,7 @@
     </ng-template>
 
     <ng-template pTemplate="loadingbody">
-      <p-progressBar mode="indeterminate" [style]="{ height: '2px' }" />
+      <p-progressBar mode="indeterminate" [style]="{ height: '2px' }"/>
     </ng-template>
   </p-table>
 </div>

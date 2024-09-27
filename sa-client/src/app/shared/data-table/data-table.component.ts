@@ -45,12 +45,11 @@ import { ProgressBarModule } from 'primeng/progressbar';
     ProgressBarModule
   ],
   providers: [
-    { provide: DialogService, useClass: DialogService },
+    DialogService,
     DataTableStore,
     DataTableService
   ],
-  templateUrl: './data-table.component.html',
-  styleUrl: './data-table.component.scss'
+  templateUrl: './data-table.component.html'
 })
 export class DataTableComponent {
 
@@ -70,13 +69,7 @@ export class DataTableComponent {
   }
 
   onPaginate(event: TablePageEvent) {
-    this.dataTableStore.fetch$.next({
-      ...this.dataTableStore.dataTableFilter(),
-      paginate: {
-        pageSize: event.rows,
-        offset: event.first
-      }
-    });
+    this.dataTableStore.paginate$.next({ pageSize: event.rows, offset: event.first });
   }
 
   onFilterChange(event: TableFilterEvent): void {
@@ -102,10 +95,7 @@ export class DataTableComponent {
         columnFilters.push({ ...columnFilter, operator });
       }
     }
-    this.dataTableStore.fetch$.next({
-      ...this.dataTableStore.dataTableFilter(),
-      filters: columnFilters
-    });
+    this.dataTableStore.columnFilters$.next(columnFilters);
   }
 
   openTableSettings(): void {
@@ -127,7 +117,7 @@ export class DataTableComponent {
 
     this.dialogRef.onClose.subscribe((columns: Column[]) => {
       if (!!columns?.length) {
-        this.dataTableStore.fetch$.next({ ...this.dataTableStore.dataTableFilter(), columns });
+        this.dataTableStore.columns$.next(columns);
         this.#messageService.add({ detail: 'Table settings applied.' });
       }
     });
@@ -138,7 +128,7 @@ export class DataTableComponent {
     $event.multisortmeta.forEach(sortMeta => {
       sorts.push({ column: sortMeta.field, sortOrder: sortMeta.order == 1 ? 'desc' : 'asc' });
     });
-    this.dataTableStore.fetch$.next({ ...this.dataTableStore.dataTableFilter(), sorts });
+    this.dataTableStore.sorts$.next(sorts);
   }
 
   generateCsv(): void {
