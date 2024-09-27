@@ -1,10 +1,9 @@
 import { Topology } from 'topojson-specification';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
-import { subYears } from 'date-fns';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap, zipWith } from 'rxjs';
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { ChoroplethMapService } from './choropleth-map.service';
 import { ApiResponse } from '../../model/api-response';
 
@@ -54,13 +53,12 @@ export const ChoroplethMapStore = signalStore(
     }
   })),
   withMethods((store, choroplethMapService = inject(ChoroplethMapService)) => ({
-    _initialLoad: rxMethod<void>(
+    _loadWorldLinesAndPolygons: rxMethod<void>(
       pipe(
         tap(() => store._setLoading()),
         zipWith(
           choroplethMapService.fetchWorldPolygon(),
           choroplethMapService.fetchWorldLines(),
-          choroplethMapService.fetchSalesData(store.filter())
         ),
         tap({
           next(response) {
@@ -68,8 +66,7 @@ export const ChoroplethMapStore = signalStore(
               ...state,
               worldPolygons: response[1],
               worldLines: response[2],
-              data: response[3].data,
-              loaded: true,
+              loaded: false,
               error: null
             }));
           },
@@ -80,7 +77,7 @@ export const ChoroplethMapStore = signalStore(
       )
     ),
 
-    getData: rxMethod<{ from: Date; to: Date }>(
+    _loadData: rxMethod<{ from: Date; to: Date }>(
       pipe(
         tap(() => store._setLoading()),
         switchMap((filter) => choroplethMapService.fetchSalesData(filter)),
@@ -97,7 +94,8 @@ export const ChoroplethMapStore = signalStore(
   })),
   withHooks({
     onInit(store) {
-      store._initialLoad();
+      store._loadWorldLinesAndPolygons();
+      store._loadData(computed(() => store.filter()));
     }
   })
 )

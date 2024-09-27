@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { TableFilterEvent, TableModule, TablePageEvent } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -18,10 +18,7 @@ import { TableSettingComponent } from './table-setting.component';
 import { FilterMetadata, MessageService, SortMeta } from 'primeng/api';
 import { MessagesModule } from 'primeng/messages';
 import { DataTableStore } from './data-table.store';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { filter, skip, switchMap } from 'rxjs';
 import { DatePipe } from '@angular/common';
-import { mapColumnsToColumnNames } from './data-grid.util';
 import { DataTableService } from './data-table.service';
 
 @Component({
@@ -46,7 +43,9 @@ import { DataTableService } from './data-table.service';
     DatePipe
   ],
   providers: [
-    { provide: DialogService, useClass: DialogService },
+    DialogService,
+    DataTableStore,
+    DataTableService
   ],
   templateUrl: './data-table.component.html',
   styleUrl: './data-table.component.scss'
@@ -57,20 +56,7 @@ export class DataTableComponent {
   #messageService = inject(MessageService);
   #dataTableService = inject(DataTableService);
   dataTableStore = inject(DataTableStore);
-
   dialogRef!: DynamicDialogRef<TableSettingComponent>;
-  unused = toSignal(toObservable(computed(() => ({
-    dataTableFilter: {
-      columns: mapColumnsToColumnNames(this.dataTableStore.dataTableFilter.columns()),
-      filters: this.dataTableStore.dataTableFilter.filters(),
-      sorts: this.dataTableStore.dataTableFilter.sorts()
-    },
-    paginate: this.dataTableStore.paginate()
-  }))).pipe(
-    filter(criteria => !!criteria.dataTableFilter.columns.length),
-    skip(1),
-    switchMap(async (criteria) => this.dataTableStore.getDataTableData(criteria))
-  ));
 
   constructor() {
     inject(DestroyRef).onDestroy(() => {

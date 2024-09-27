@@ -1,9 +1,9 @@
 import { Column, ColumnFilter, DataTableCriteria, DataTableFilter, Paginate, Sort } from './data-table';
 import { patchState, signalStore, withHooks, withMethods, withState } from '@ngrx/signals';
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { DataTableService } from './data-table.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { filter, pipe, switchMap, tap } from 'rxjs';
 import { withDevtools } from '@angular-architects/ngrx-toolkit';
 import { ApiResponse } from '../model/api-response';
 import { mapColumnsToColumnNames } from './data-grid.util';
@@ -98,8 +98,9 @@ export const DataTableStore = signalStore(
   })),
   // TODO: handle response error
   withMethods((store, dataTableService = inject(DataTableService)) => ({
-    getDataTableData: rxMethod<DataTableCriteria>(
+    _loadData: rxMethod<DataTableCriteria>(
       pipe(
+        filter(criteria => !!criteria.dataTableFilter.columns.length),
         tap(() => store._setLoading()),
         switchMap((criteria) => dataTableService.getData(criteria)),
         tap({
@@ -113,7 +114,7 @@ export const DataTableStore = signalStore(
       )
     ),
 
-    _initialLoad: rxMethod<void>(
+    _loadColumnsAndRecordCount: rxMethod<void>(
       pipe(
         tap(() => store._setLoading()),
         switchMap(() => dataTableService.getColumns()),
@@ -133,25 +134,21 @@ export const DataTableStore = signalStore(
           error(error: Error) {
             store._setError(error);
           }
-        }),
-        switchMap(() => dataTableService.getData({
-          dataTableFilter: { ...store.dataTableFilter(), columns: mapColumnsToColumnNames(store.columns()) },
-          paginate: store.paginate()
-        })),
-        tap({
-          next(response: ApiResponse<Record<string, number | string | Date>[]>) {
-            store._setData(response.data);
-          },
-          error(error: Error) {
-            store._setError(error);
-          }
         })
       )
     )
   })),
   withHooks({
     onInit(store) {
-      store._initialLoad();
+      store._loadColumnsAndRecordCount();
+      store._loadData(computed(() => ({
+        dataTableFilter: {
+          columns: mapColumnsToColumnNames(store.dataTableFilter.columns()),
+          filters: store.dataTableFilter.filters(),
+          sorts: store.dataTableFilter.sorts()
+        },
+        paginate: store.paginate()
+      })));
     }
   })
 );

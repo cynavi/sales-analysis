@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import * as d3Projection from 'd3-geo-projection';
@@ -12,8 +12,6 @@ import { CardModule } from 'primeng/card';
 import { AccordionModule } from 'primeng/accordion';
 import { CalendarModule } from 'primeng/calendar';
 import { FormsModule } from '@angular/forms';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { skip, switchMap } from 'rxjs';
 import { format } from 'date-fns';
 
 @Component({
@@ -67,7 +65,7 @@ import { format } from 'date-fns';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ChoroplethMapComponent implements OnInit {
+export class ChoroplethMapComponent {
 
   currencyPipe = inject(CurrencyPipe);
   choroplethMapStore = inject(ChoroplethMapStore);
@@ -86,10 +84,6 @@ export class ChoroplethMapComponent implements OnInit {
     .center([0, 0])
     .translate([this.width / 2.2, this.height / 2]);
   path: d3.GeoPath<unknown, d3.GeoPermissibleObjects> = d3.geoPath().projection(this.projection);
-  unused = toSignal(toObservable(computed(() => this.choroplethMapStore.filter())).pipe(
-    skip(1),
-    switchMap(async (filter) => this.choroplethMapStore.getData(filter))
-  ));
 
   constructor() {
     effect(() => {
@@ -98,10 +92,6 @@ export class ChoroplethMapComponent implements OnInit {
         this.prepareChart();
       }
     });
-  }
-
-  ngOnInit() {
-
   }
 
   prepareChart(): void {
