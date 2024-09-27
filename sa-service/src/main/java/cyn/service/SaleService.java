@@ -2,8 +2,8 @@ package cyn.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import cyn.domain.Criteria;
 import cyn.domain.DataExportRequest;
+import cyn.domain.DataTableFilter;
 import cyn.domain.SaleOverallFilter;
 import cyn.domain.Status;
 import cyn.entity.Report;
@@ -43,22 +43,26 @@ public class SaleService {
     public void processCSVRequest(ConsumerRecord<String, String> consumerRecord) {
         try {
             var dataExportRequest = objectMapper.readValue(consumerRecord.value(), DataExportRequest.class);
-            var criteria = new Criteria(dataExportRequest.dataTableFilter(), null);
+            var dataTableFilter = new DataTableFilter(
+                    dataExportRequest.dataTableFilter().columns(),
+                    dataExportRequest.dataTableFilter().sorts(),
+                    dataExportRequest.dataTableFilter().filters(),
+                    null);
             var params = new HashMap<String, Object>();
-            var query = buildQuery(criteria, params, true);
-            var salesData = saleRepository.getSalesCSVData(query, criteria.dataTableFilter().columns(), new HashMap<>());
+            var query = buildQuery(dataTableFilter, params, true);
+            var salesData = saleRepository.getSalesCSVData(query, dataTableFilter.columns(), new HashMap<>());
             var csvFilePath = path + dataExportRequest.id() + ".csv";
-            writeAndSaveCSVReport(csvFilePath, criteria.dataTableFilter().columns(), salesData);
+            writeAndSaveCSVReport(csvFilePath, dataTableFilter.columns(), salesData);
             saveJob(csvFilePath, query);
         } catch (JsonProcessingException e) {
             logger.error("Error occurred trying to parse consumer record", e);
         }
     }
 
-    public List<Map<String, Object>> getSalesData(Criteria criteria) {
+    public List<Map<String, Object>> getSalesData(DataTableFilter dataTableFilter) {
         var params = new HashMap<String, Object>();
-        var query = buildQuery(criteria, params, false);
-        return saleRepository.getSalesData(query, criteria.dataTableFilter().columns(), params);
+        var query = buildQuery(dataTableFilter, params, false);
+        return saleRepository.getSalesData(query, dataTableFilter.columns(), params);
     }
 
     public Integer getRecordCount() {
@@ -101,15 +105,15 @@ public class SaleService {
         reportService.save(job);
     }
 
-    private String buildQuery(Criteria criteria, Map<String , Object> params, boolean isDataExport) {
+    private String buildQuery(DataTableFilter dataTableFilter, Map<String, Object> params, boolean isDataExport) {
         var query = new StringBuilder("select ");
-        criteria.dataTableFilter().columns().forEach(col -> query.append(col).append(", "));
+        dataTableFilter.columns().forEach(col -> query.append(col).append(", "));
         query.deleteCharAt(query.lastIndexOf(","));
         query.append(" from sale ");
-        query.append(buildWhereClause(criteria, params));
-        if (criteria.dataTableFilter().sorts() != null && !criteria.dataTableFilter().sorts().isEmpty()) {
+        query.append(buildWhereClause(dataTableFilter, params));
+        if (dataTableFilter.sorts() != null && !dataTableFilter.sorts().isEmpty()) {
             query.append(" order by ");
-            criteria.dataTableFilter().sorts().forEach(sort -> query.append(sort.column())
+            dataTableFilter.sorts().forEach(sort -> query.append(sort.column())
                     .append(" ")
                     .append(sort.sortOrder().getValue())
                     .append(", "));
@@ -117,22 +121,22 @@ public class SaleService {
         }
         if (!isDataExport) {
             query.append(" limit ")
-                    .append(criteria.paginate().pageSize())
+                    .append(dataTableFilter.paginate().pageSize())
                     .append(" offset ")
-                    .append(criteria.paginate().offset());
+                    .append(dataTableFilter.paginate().offset());
         }
         return query.toString();
     }
 
     @SuppressWarnings("unchecked")
-    private String buildWhereClause(Criteria criteria, Map<String, Object> params) {
-        if (criteria.dataTableFilter().filters().isEmpty()) {
+    private String buildWhereClause(DataTableFilter dataTableFilter, Map<String, Object> params) {
+        if (dataTableFilter.filters().isEmpty()) {
             return "";
         }
         StringBuilder sql = new StringBuilder();
         sql.append(" where ");
 
-        criteria.dataTableFilter().filters().forEach(filter -> {
+        dataTableFilter.filters().forEach(filter -> {
             sql.append(" ( ");
             var queryAndParams = FilterUtil.buildColumnFilterAndParams(filter.columnFilters(), filter.column(), filter.operator());
             sql.append(queryAndParams.get("query")).append(" and ");
