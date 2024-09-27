@@ -8,6 +8,7 @@ export type DataTableFilter = {
   columns: Column[];
   filters: ColumnFilter[];
   sorts: Sort[];
+  paginate: Paginate;
 };
 
 export type ColumnFilter = {
@@ -29,7 +30,4 @@ export type Paginate = {
   offset: number;
 };
 
-export type DataTableCriteria = {
-  dataTableFilter: Omit<DataTableFilter, 'columns'> & { columns: string[] };
-  paginate: Paginate;
-};
+export type DataTableCriteria = Omit<DataTableFilter, 'columns'> & { columns: string[] };

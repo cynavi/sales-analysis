@@ -7,7 +7,7 @@
     [lazy]="true"
     [paginator]="true"
     [rowsPerPageOptions]="[100, 200, 500, 1000]"
-    [rows]="dataTableStore.paginate.pageSize()"
+    [rows]="dataTableStore.dataTableFilter.paginate.pageSize()"
     [scrollable]="true"
     [sortMode]="'multiple'"
     [totalRecords]="dataTableStore.recordCount()"

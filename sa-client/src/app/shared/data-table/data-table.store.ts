@@ -13,7 +13,6 @@ type DataTableState = {
   recordCount: number;
   dataTableFilter: DataTableFilter;
   columns: Column[];
-  paginate: Paginate;
   loaded: boolean;
   error: Error | null;
 };
@@ -24,11 +23,11 @@ const initialState: DataTableState = {
   dataTableFilter: {
     filters: [],
     sorts: [],
-    columns: []
-  },
-  paginate: {
-    pageSize: 100,
-    offset: 0
+    columns: [],
+    paginate: {
+      pageSize: 100,
+      offset: 0
+    }
   },
   loaded: false,
   columns: [],
@@ -62,7 +61,7 @@ export const DataTableStore = signalStore(
     },
 
     setPaginate(paginate: Paginate) {
-      patchState(store, () => ({ paginate }));
+      patchState(store, (state) => ({ dataTableFilter: { ...state.dataTableFilter, paginate } }));
     },
 
     clearFilters() {
@@ -100,7 +99,7 @@ export const DataTableStore = signalStore(
   withMethods((store, dataTableService = inject(DataTableService)) => ({
     _loadData: rxMethod<DataTableCriteria>(
       pipe(
-        filter(criteria => !!criteria.dataTableFilter.columns.length),
+        filter(criteria => !!criteria.columns.length),
         tap(() => store._setLoading()),
         switchMap((criteria) => dataTableService.getData(criteria)),
         tap({
@@ -142,12 +141,10 @@ export const DataTableStore = signalStore(
     onInit(store) {
       store._loadColumnsAndRecordCount();
       store._loadData(computed(() => ({
-        dataTableFilter: {
-          columns: mapColumnsToColumnNames(store.dataTableFilter.columns()),
-          filters: store.dataTableFilter.filters(),
-          sorts: store.dataTableFilter.sorts()
-        },
-        paginate: store.paginate()
+        columns: mapColumnsToColumnNames(store.dataTableFilter.columns()),
+        filters: store.dataTableFilter.filters(),
+        sorts: store.dataTableFilter.sorts(),
+        paginate: store.dataTableFilter.paginate()
       })));
     }
   })
