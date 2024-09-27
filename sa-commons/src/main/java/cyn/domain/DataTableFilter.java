@@ -9,6 +9,7 @@ public record DataTableFilter(
         @NotEmpty
         List<@NotNull String> columns,
         List<Sort> sorts,
-        List<Filter> filters
+        List<Filter> filters,
+        Paginate paginate
 ) {
 }

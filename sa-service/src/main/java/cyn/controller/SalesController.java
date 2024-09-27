@@ -1,6 +1,6 @@
 package cyn.controller;
 
-import cyn.domain.Criteria;
+import cyn.domain.DataTableFilter;
 import cyn.domain.Response;
 import cyn.domain.SaleOverallFilter;
 import cyn.service.SaleService;
@@ -28,8 +28,8 @@ public class SalesController {
     }
 
     @PostMapping("/sales")
-    public ResponseEntity<Mono<Response>> getSalesDate(@Valid @RequestBody Criteria criteria) {
-        var response = new Response(saleService.getSalesData(criteria), List.of());
+    public ResponseEntity<Mono<Response>> getSalesDate(@Valid @RequestBody DataTableFilter dataTableFilter) {
+        var response = new Response(saleService.getSalesData(dataTableFilter), List.of());
         return ResponseEntity
                 .status(HttpStatus.OK.value())
                 .body(Mono.just(response));
